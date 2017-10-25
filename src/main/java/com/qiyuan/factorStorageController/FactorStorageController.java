@@ -3,6 +3,7 @@ package com.qiyuan.factorStorageController;
 import com.daoshun.exception.NullParameterException;
 import com.qiyuan.Base.BaseController;
 import com.qiyuan.entity.Result;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 
 
@@ -50,5 +52,10 @@ public class FactorStorageController  extends BaseController {
         }
         return  result;
     }
-    //aaaa
+
+    public static void main(String[] args) {
+        String [][]  aaaa={{"aaaa","aaaa"},{"dev","ddddd"},{"ded","deede"},{"ccd","deded"}};
+        Map<Object, Object> objectObjectMap = ArrayUtils.toMap(aaaa);
+        System.out.println(objectObjectMap);
+    }
 }
