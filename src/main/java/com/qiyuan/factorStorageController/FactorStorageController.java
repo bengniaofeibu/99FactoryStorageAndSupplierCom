@@ -51,8 +51,4 @@ public class FactorStorageController  extends BaseController {
         return  result;
     }
 
-
-    public static void main(String[] args) {
-        String[] aa={"","","","",""};
-    }
 }
