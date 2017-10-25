@@ -50,5 +50,4 @@ public class FactorStorageController  extends BaseController {
         }
         return  result;
     }
-
 }
