@@ -28,7 +28,7 @@ public class FactorStorageController  extends BaseController {
      private  static Log LOGGER= LogFactory.getLog(FactorStorageController.class);
 
 
-    @GetMapping(value = "/supplier")
+    @PostMapping(value = "/supplier")
     public void supplier(HttpServletRequest request, HttpServletResponse response){
         try {
             callingService(request, response);
