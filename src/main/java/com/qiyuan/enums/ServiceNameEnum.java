@@ -1,11 +1,15 @@
 package com.qiyuan.enums;
 
+
+/**
+ *  接口入口名称
+ */
 public enum ServiceNameEnum {
 
+    //锁
     FACTORY("factory"),
 
-    TERMINAL("terminal"),
-
+    //车厂
     SUPPLIER("supplier");
 
 

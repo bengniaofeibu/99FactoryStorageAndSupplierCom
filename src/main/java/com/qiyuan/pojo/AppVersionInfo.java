@@ -15,7 +15,7 @@ import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name="t_app_version_info")
-public class AppVersionInfo implements Serializable{
+public class AppVersionInfo extends BasePojo{
 
 	/**
 	 * 

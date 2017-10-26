@@ -15,7 +15,7 @@ import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name="t_lock_terminal_info")
-public class LockTerminalInfo implements Serializable{
+public class LockTerminalInfo extends BasePojo{
 
 	/**
 	 * 

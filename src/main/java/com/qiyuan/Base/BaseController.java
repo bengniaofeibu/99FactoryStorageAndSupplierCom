@@ -14,21 +14,17 @@ import com.qiyuan.enums.ServiceNameEnum;
 import com.qiyuan.pojo.*;
 import com.qiyuan.service.*;
 import com.qiyuan.terminalService.ApiClientConstantService;
-import com.qiyuan.utils.ResultUtil;
+import com.qiyuan.utils.StringCommonUtil;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import javax.annotation.Resource;
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -46,6 +42,10 @@ import java.util.*;
 public class BaseController extends HttpServlet {
 
     private   final Log LOGGER = LogFactory.getLog(getClass());
+
+    private  static final  String BAR_CODE="http://www.99bicycle.com";
+
+    private  static  final  String WL_START_NO="50";
 
     @Resource
     private ILockTerminalService lockTerminalService;
@@ -98,6 +98,8 @@ public class BaseController extends HttpServlet {
         Result result;
         try {
             String action = getAction(request, response);
+
+            //锁的接口
             if (isRequestUrl(ServiceNameEnum.FACTORY)) switch (action) {
                 case Constant.LOGIN:
                     Login(request, response);//登入接口
@@ -154,7 +156,7 @@ public class BaseController extends HttpServlet {
                     getBarcodeBySimNo(request, response);
                     break;
                 case Constant.GET_LIANTONG_LOCK_STATUS:
-                    String iccid=getParam("iccid");
+                    String iccid=getReqParam("iccid");
                     //根据iccid获取车辆锁的状态
                     result=apiClientConstantService.callWebService(iccid);
                     return  result;
@@ -162,6 +164,7 @@ public class BaseController extends HttpServlet {
                     throw new NullParameterException();
             }
 
+            //车厂的接口
             if (isRequestUrl(ServiceNameEnum.SUPPLIER)){
                 switch (action){
                     case Constant.SUPPLIERUPLOADBICYCLE:
@@ -208,7 +211,7 @@ public class BaseController extends HttpServlet {
         try {
             PrintWriter out = response.getWriter();
             // json格式转换
-            Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").disableHtmlEscaping().create();
+            Gson gson = new GsonBuilder()/*.setDateFormat("yyyy-MM-dd HH:mm:ss").disableHtmlEscaping()*/.create();
             String json = gson.toJson(resultMap);
             out.print(json);
             System.out.println(json);
@@ -259,7 +262,7 @@ public class BaseController extends HttpServlet {
     }
 
     @SuppressWarnings("unchecked")
-    public String getAction(HttpServletRequest request, HttpServletResponse response) {
+    private String getAction(HttpServletRequest request, HttpServletResponse response) {
         String action = null;
         // 上传文件的场合
         if (ServletFileUpload.isMultipartContent(request)) {
@@ -383,9 +386,6 @@ public class BaseController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
         }
-//		String simNo=request.getParameter("simNo");
-        System.out.println(simNo);
-        CommonUtils.validateEmpty(simNo);
 
         if (simNo.length()==12) {
             BikeInfo bikeInfo = bikeService.getBikeInfoBySimNo(simNo);
@@ -428,9 +428,6 @@ public class BaseController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
         }
-//		String barcode=request.getParameter("barcode");
-        System.out.println(barcode);
-        CommonUtils.validateEmpty(barcode);
 
         if(barcode.indexOf("http://www.99bicycle.com") != -1){
             System.out.println("有效二维码");
@@ -479,12 +476,6 @@ public class BaseController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println(barcode);
-        CommonUtils.validateEmpty(barcode);
-        System.out.println(cmd);
-        CommonUtils.validateEmpty(cmd);
-        System.out.println(id);
-        CommonUtils.validateEmpty(id);
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo = lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (lockFactoryEmployeeInfo != null) {
             if (cmd.equals("closeMotorLock")) {
@@ -536,12 +527,6 @@ public class BaseController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println(barcode);
-        CommonUtils.validateEmpty(barcode);
-        System.out.println(cmd);
-        CommonUtils.validateEmpty(cmd);
-        System.out.println(id);
-        CommonUtils.validateEmpty(id);
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo = lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (lockFactoryEmployeeInfo != null) {
             if (cmd.equals("openBatteryLock")) {
@@ -597,15 +582,6 @@ public class BaseController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        CommonUtils.validateEmpty(newBarcode);
-        System.out.println(newBarcode);
-
-        CommonUtils.validateEmpty(oldBarcode);
-        System.out.println(oldBarcode);
-
-        CommonUtils.validateEmpty(id);
-        System.out.println(id);
-
 
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo = lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (lockFactoryEmployeeInfo != null) {
@@ -700,12 +676,6 @@ public class BaseController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println(barcode);
-        CommonUtils.validateEmpty(barcode);
-        System.out.println(cmd);
-        CommonUtils.validateEmpty(cmd);
-        System.out.println(id);
-        CommonUtils.validateEmpty(id);
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo = lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (lockFactoryEmployeeInfo != null) {
             if (cmd.equals("gprsOpenLock")) {
@@ -757,12 +727,6 @@ public class BaseController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println(barcode);
-        CommonUtils.validateEmpty(barcode);
-        System.out.println(cmd);
-        CommonUtils.validateEmpty(cmd);
-        System.out.println(id);
-        CommonUtils.validateEmpty(id);
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo=lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (lockFactoryEmployeeInfo!=null){
             if(cmd.equals("getBleMessage")){
@@ -982,14 +946,6 @@ public class BaseController extends HttpServlet {
     protected void factoryGprsOpenLockBySimNo(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
         Map<String, Object> resultMap = new HashMap<String, Object>();
 
-//		String simNo = request.getParameter("simNo");
-//		CommonUtils.validateEmpty(simNo);
-//
-//		String cmd = request.getParameter("cmd");// 命令
-//		CommonUtils.validateEmpty(cmd);
-//
-//		String id = request.getParameter("id");// 用户ID
-//		CommonUtils.validateEmpty(id);
         String simNo ="";
         String cmd ="";
         try {
@@ -999,10 +955,6 @@ public class BaseController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println(simNo);
-        CommonUtils.validateEmpty(simNo);
-        System.out.println(cmd);
-        CommonUtils.validateEmpty(cmd);
 
         if (simNo.length() == 12) {
             if (cmd.equals("gprsOpenLock")) {
@@ -1039,12 +991,6 @@ public class BaseController extends HttpServlet {
     protected void logOut(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
         Map<String, Object> resultMap = new HashMap<String, Object>();
 
-//		String id = request.getParameter("id");// 用户ID
-//		CommonUtils.validateEmpty(id);
-//
-//		String type = request.getParameter("type");// 退出类型 1、正常退出 2、被迫退出
-//		CommonUtils.validateEmpty(type);
-
         String id ="";
         String type ="";
         try {
@@ -1055,11 +1001,6 @@ public class BaseController extends HttpServlet {
             e.printStackTrace();
         }
 
-        System.out.println(id);
-        CommonUtils.validateEmpty(id);
-
-        System.out.println(type);
-        CommonUtils.validateEmpty(type);
 
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo = lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if(lockFactoryEmployeeInfo != null){
@@ -1096,24 +1037,6 @@ public class BaseController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println(realName);
-
-        CommonUtils.validateEmpty(realName);
-        System.out.println(passWord);
-        CommonUtils.validateEmpty(passWord);
-        System.out.println(adminCid);
-        CommonUtils.validateEmpty(adminCid);
-
-
-//		String realName = request.getParameter("realName");
-//		CommonUtils.validateEmpty(realName);
-//
-//		String passWord = request.getParameter("passWord");
-//		CommonUtils.validateEmpty(passWord);
-//
-//		String adminCid = request.getParameter("adminCid");// 用户Cid
-//		CommonUtils.validateEmpty(adminCid);
-//
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo = lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoByRealName(realName);
         LockFactoryEmployeeInfo info = lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfo(realName);
         if (lockFactoryEmployeeInfo!=null) {
@@ -1165,18 +1088,6 @@ public class BaseController extends HttpServlet {
     private void changePsw(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
         Map<String, Object> resultMap = new HashMap<String, Object>();
 
-//		String realName = request.getParameter("realName");// 用户姓名
-//		CommonUtils.validateEmpty(realName);
-//
-//		String oldPassword = request.getParameter("oldPassword");// 用户原密码
-//		CommonUtils.validateEmpty(oldPassword);
-//
-//		String newPassword = request.getParameter("newPassword");// 用户新密码
-//		CommonUtils.validateEmpty(newPassword);
-//
-//		String id=request.getParameter("id");//用户id
-//		CommonUtils.validateEmpty(id);
-
 
         String oldPassword ="";
         String realName ="";
@@ -1191,18 +1102,6 @@ public class BaseController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println(oldPassword);
-        CommonUtils.validateEmpty(oldPassword);
-
-        System.out.println(realName);
-        CommonUtils.validateEmpty(realName);
-
-        System.out.println(id);
-        CommonUtils.validateEmpty(id);
-
-        System.out.println(newPassword);
-        CommonUtils.validateEmpty(newPassword);
-
 
         LockFactoryEmployeeInfo resInfo=lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (resInfo!=null){
@@ -1249,12 +1148,6 @@ public class BaseController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println(mac);
-        CommonUtils.validateEmpty(mac);
-
-        System.out.println(id);
-        CommonUtils.validateEmpty(id);
-
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo=lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (lockFactoryEmployeeInfo!=null){
             String[] bm = mac.split(":");
@@ -1335,11 +1228,6 @@ public class BaseController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println(id);
-        CommonUtils.validateEmpty(id);
-        System.out.println(appId);
-        CommonUtils.validateEmpty(appId);
-
 
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo=lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (lockFactoryEmployeeInfo!=null){
@@ -1619,14 +1507,6 @@ public class BaseController extends HttpServlet {
 
     protected void factoryGprsOpenLock(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
         Map<String, Object> resultMap =new HashMap<String, Object>();
-//		String barcode = request.getParameter("barcode");//二维码
-//		CommonUtils.validateEmpty(barcode);
-//
-//		String cmd = request.getParameter("cmd");// 命令
-//		CommonUtils.validateEmpty(cmd);
-//
-//		String id=request.getParameter("id");//用户id
-//		CommonUtils.validateEmpty(id);
         String barcode ="";
         String cmd ="";
         try {
@@ -1636,10 +1516,6 @@ public class BaseController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println(barcode);
-        CommonUtils.validateEmpty(barcode);
-        System.out.println(cmd);
-        CommonUtils.validateEmpty(cmd);
 
         if(cmd.equals("gprsOpenLock")){
             if(barcode.indexOf("http://www.99bicycle.com") != -1){
@@ -1679,14 +1555,6 @@ public class BaseController extends HttpServlet {
 
     protected void getBluetoothInfo(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
         Map<String, Object> resultMap =new HashMap<String, Object>();
-//		String barcode = request.getParameter("barcode");//二维码
-//		CommonUtils.validateEmpty(barcode);
-//
-//		String cmd = request.getParameter("cmd");// 命令
-//		CommonUtils.validateEmpty(cmd);
-//
-//		String id=request.getParameter("id");//用户id
-//		CommonUtils.validateEmpty(id);
         String barcode ="";
         String cmd ="";
         try {
@@ -1696,10 +1564,6 @@ public class BaseController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println(barcode);
-        CommonUtils.validateEmpty(barcode);
-        System.out.println(cmd);
-        CommonUtils.validateEmpty(cmd);
 //		LockFactoryEmployeeInfo lockFactoryEmployeeInfo=lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
 //		if (lockFactoryEmployeeInfo!=null){
         if(cmd.equals("getBleMessage")){
@@ -1754,29 +1618,6 @@ public class BaseController extends HttpServlet {
 
     protected void uploadTerminalInfo(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
         Map<String, Object> resultMap =new HashMap<String, Object>();
-//		String barcode = request.getParameter("barcode");//二维码
-//		CommonUtils.validateEmpty(barcode);
-//
-//		String mac = request.getParameter("mac");// mac地址
-//		CommonUtils.validateEmpty(mac);
-//
-//		String factoryNo = request.getParameter("factoryNo");// 工厂代号
-//		CommonUtils.validateEmpty(factoryNo);
-//
-//		String key = request.getParameter("key");// 新秘钥
-//		CommonUtils.validateEmpty(key);
-//
-//		String psw = request.getParameter("pass");// 新密码
-//		CommonUtils.validateEmpty(psw);
-//
-//		String simNo = request.getParameter("simNo");//设备编号
-//		CommonUtils.validateEmpty(simNo);
-//
-//		String md5reply = request.getParameter("md5reply");//MD5加密信息
-//		CommonUtils.validateEmpty(md5reply);
-//
-//		String id =request.getParameter("id");//用户id
-//		CommonUtils.validateEmpty(id);
 
         String barcode ="";
         String mac ="";
@@ -1786,7 +1627,6 @@ public class BaseController extends HttpServlet {
         String psw="";
         String simNo="";
         String md5reply="";
-
 
         try {
 
@@ -1804,35 +1644,46 @@ public class BaseController extends HttpServlet {
             e.printStackTrace();
         }
 
-        CommonUtils.validateEmpty(barcode);
-        System.out.println(barcode);
-
-        CommonUtils.validateEmpty(mac);
-        System.out.println(mac);
-
-        CommonUtils.validateEmpty(id);
-        System.out.println(id);
-
-        CommonUtils.validateEmpty(factoryNo);
-        System.out.println(factoryNo);
-
-        CommonUtils.validateEmpty(key);
-        System.out.println(key);
-
-        CommonUtils.validateEmpty(psw);
-        System.out.println(psw);
-
-        CommonUtils.validateEmpty(simNo);
-        System.out.println(simNo);
-
-        CommonUtils.validateEmpty(md5reply);
-        System.out.println(md5reply);
-
-
-
 
         LOGGER.info("发来的信息:" + "蓝牙:" + mac);
         System.out.println("发来的信息:" + "蓝牙:" + mac);
+
+
+
+        String bluetoothMac=StringCommonUtil.getRegexStr(mac,":");
+
+        String newKey =StringCommonUtil.getRegexStr(key,",");
+
+        String newPass = StringCommonUtil.getRegexStr(psw,",");
+
+        String bicycleNum = getBicycleNum(barcode);
+
+        //判断是simno是否存在，如果存在提示
+        BikeInfo bikeInfoBySimNo = bikeService.getBikeInfoBySimNo(simNo);
+        if (null!= bikeInfoBySimNo){
+           final boolean contains = StringCommonUtil.contains(getBicycleNum(barcode), WL_START_NO);
+           //判断是否是物联的
+            if (contains) {
+              final int cityNo=bikeInfoBySimNo.getCityNo();
+              final int count = bikeService.getBikecUnbundlingNum(simNo);
+                //判断是否已经解绑了 如果CityNo等于0并且count==0
+                if (cityNo==0 && count!=0){
+                    //更新车辆消息和记录以前的消息和更新过的信息
+
+
+                  }else if (cityNo==0 && count==0){
+                    //simNo已经绑定过
+                    resultMap.put("result", "fail");
+                    resultMap.put("message", "绑定失败:此simNo已经存在");
+                    setResult(response, resultMap);
+                    return;
+                }else {
+                    resultMap.put("result", "fail");
+                    resultMap.put("message", "绑定失败:异常情况  cityNo :"+cityNo+" 解绑数量: "+count);
+                    setResult(response, resultMap);
+                }
+            }
+        }
 
         LockFactoryEmployeeInfo info =lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (info!=null){
@@ -1840,28 +1691,12 @@ public class BaseController extends HttpServlet {
             if (lockFactoryInfo!=null) {
                 String res = CommonUtils.MD5(simNo+mac+lockFactoryInfo.getLockFactoryNo());
                 if (res.equalsIgnoreCase(md5reply)) {
-                    if (barcode.indexOf("http://www.99bicycle.com")!=-1) {
+                    if (judgeBarcodeURL(BAR_CODE)) {
                         System.out.println("有效二维码");
-                        int index = barcode.indexOf("b=");
-                        System.out.println("index:"+index);
-                        String bicycleNum = barcode.substring(index + 2);
+
                         System.out.println(bicycleNum);
 
-                        String[] bm = mac.split(":");
-                        String bluetoothMac="";
-                        for (int i = 0; i < bm.length; i++) {
-                            bluetoothMac = bluetoothMac + bm[i];
-                        }
-                        String[] my = key.split(",");
-                        String newKey = "";
-                        for(int j=0;j < my.length;j++){
-                            newKey = newKey + my[j];
-                        }
-                        String[] np = psw.split(",");
-                        String newPass = "";
-                        for(int k=0;k < np.length;k++){
-                            newPass = newPass + np[k];
-                        }
+
                         LOGGER.info("解析信息:" + "蓝牙:" + bluetoothMac);
                         System.out.println("解析信息:" + "蓝牙:" + bluetoothMac);
                         BikeInfo bikeInfo = bikeService.getBikeInfoByBicycleNumAndBluetoothMac(bicycleNum, bluetoothMac);
@@ -2384,8 +2219,8 @@ public class BaseController extends HttpServlet {
          * @param name
          * @return
          */
-    private String getParam(String name){
-          return  getRequest().getParameter(name);
+    private String getReqParam(String name){
+          return  this.getRequest().getParameter(name);
     }
 
 
@@ -2413,6 +2248,8 @@ public class BaseController extends HttpServlet {
             }
             ObjectMapper json = new ObjectMapper();
             Map<String, String> requestMap = json.readValue(TripleDES.decode(reportBuilder.toString()), Map.class);
+            //验证参数是否为空
+            validateEmpty(requestMap);
             return  requestMap;
          } catch (IOException e) {
             LOGGER.error(e.getMessage());
@@ -2436,5 +2273,37 @@ public class BaseController extends HttpServlet {
             }
         }
         return  false;
+    }
+
+    /**
+     * 验证
+     * @param map
+     */
+    private  void validateEmpty(Map<String,String> map) throws NullParameterException {
+        for (Map.Entry<String,String> entry:map.entrySet()){
+                CommonUtils.validateEmpty(entry.getValue());
+        }
+    }
+
+    /**
+     * 判断BarcodeURL是否合法
+     * @param barcodeURL
+     */
+    private  boolean  judgeBarcodeURL(String barcodeURL){
+           return barcodeURL.indexOf(BAR_CODE)!=-1;
+    }
+
+
+    /**
+     * 根据barcodeURL截取icycleNum
+     * @param barcodeURL
+     * @return
+     */
+    private  String getBicycleNum(String barcodeURL){
+          if (judgeBarcodeURL(barcodeURL)){
+                int index = barcodeURL.indexOf("b=");
+                return  barcodeURL.substring(index + 2);
+          }
+          return  "";
     }
 }

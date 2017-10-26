@@ -15,7 +15,7 @@ import javax.persistence.TemporalType;
 
 @Entity
 @Table(name = "t_lock_gps_real_Data")
-public class LockGPSRealData implements Serializable {
+public class LockGPSRealData extends BasePojo {
 
 	/**
 	 * 

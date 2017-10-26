@@ -15,7 +15,7 @@ import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name="t_lock_factory_info")
-public class LockFactoryInfo implements Serializable{
+public class LockFactoryInfo extends BasePojo{
 
 	/**
 	 * 

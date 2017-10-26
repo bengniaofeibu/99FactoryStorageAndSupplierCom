@@ -8,7 +8,7 @@ import java.util.Date;
 
 @Entity
 @Table(name = "t_bike_out_storge_info")
-public class BikeOutStorgeInfo implements Serializable{
+public class BikeOutStorgeInfo extends BasePojo{
 	/**
 	 * 
 	 */

@@ -9,7 +9,7 @@ import java.util.Date;
 
 @Entity
 @Table(name = "t_change_barcode_record")
-public class ChangeBarcodeRecord implements Serializable{
+public class ChangeBarcodeRecord extends BasePojo{
 
     @Id
     @GenericGenerator(name="uuid",strategy="uuid")

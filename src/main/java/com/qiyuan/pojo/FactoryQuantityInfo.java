@@ -9,7 +9,7 @@ import java.util.Date;
 
 @Entity
 @Table(name = "t_factory_quantity_info")
-public class FactoryQuantityInfo implements Serializable{
+public class FactoryQuantityInfo extends BasePojo{
 
 	/**
 	 * 

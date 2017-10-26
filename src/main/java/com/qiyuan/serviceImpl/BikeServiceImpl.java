@@ -11,6 +11,11 @@ import com.qiyuan.service.IBikeService;
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class BikeServiceImpl extends BaseServiceImpl implements IBikeService{
 
+
+//	private  static  final  String BIKEC_UNBUNDLING_NUM="select count(1) from CancellationCitynoInfo where simNo=?";
+
+	private  static  final  String BIKEC_UNBUNDLING_NUM="select count(1) from CancellationCitynoInfo where preCityNo=?";
+
 	@Override
 	public BikeInfo getBikeInfoByBicycleNum(String bicycleNum) {
 		StringBuffer shql = new StringBuffer();
@@ -62,4 +67,14 @@ public class BikeServiceImpl extends BaseServiceImpl implements IBikeService{
 		return info;
 	}
 
+
+	/**
+	 * 根据simno查出车辆是否解绑
+	 * @param simNO
+ 	 * @return  0没有解绑 大于0 已经解绑
+	 */
+	@Override
+	public Integer getBikecUnbundlingNum(String simNO) {
+		return dataDao.getInfoCount(BIKEC_UNBUNDLING_NUM,simNO);
+	}
 }

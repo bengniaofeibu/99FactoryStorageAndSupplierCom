@@ -8,7 +8,7 @@ import java.util.Date;
 
 @Entity
 @Table(name="t_admin_push_info")
-public class AdminPushInfo implements Serializable{
+public class AdminPushInfo extends BasePojo{
 
 	/**
 	 * 

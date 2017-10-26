@@ -8,7 +8,7 @@ import java.util.Date;
 
 @Entity
 @Table(name="t_lock_terminal_info_temp")
-public class LockTerminalInfoTemp implements Serializable {
+public class LockTerminalInfoTemp extends BasePojo {
 
     /**
      *

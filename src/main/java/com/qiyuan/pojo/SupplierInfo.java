@@ -8,7 +8,7 @@ import java.util.Date;
 
 @Entity
 @Table(name = "t_supplier_info")
-public class SupplierInfo implements Serializable{
+public class SupplierInfo extends BasePojo{
 
 	/**
 	 * 

@@ -3,19 +3,13 @@ package com.qiyuan.pojo;
 import java.io.Serializable;
 import java.util.Date;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import javax.persistence.*;
 
 import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name="t_bike_info")
-public class BikeInfo implements Serializable{
+public class BikeInfo extends BasePojo{
 
 	/**
 	 * 
@@ -33,6 +27,42 @@ public class BikeInfo implements Serializable{
 	
 	@Column(name = "bicycle_status", length = 2, nullable = false)
 	private Integer bicycleStatus;
+
+	@Column(name="battery_status")
+	private  Integer batteryStatus;
+
+	@Column(name="binding_status")
+    private  Integer bindingStatus;
+
+	@Column(name = "break_status")
+	private Integer  breakStatus;
+
+	@Column(name = "charge_status")
+	private  Integer chargeStatus;
+
+	@Column(name = "corpse_status")
+	private  Integer corpse_status;
+
+	@Column(name = "fence_status")
+	private  Integer fence_status;
+
+	@Column(name = "online_status")
+	private Integer onlineStatus;
+
+	@Column(name = "ride_status")
+    private  Integer rideStatus;
+
+	@Column(name = "shutdown_status")
+	private  Integer shutdownStatus;
+
+	@Column(name = "activity_status")
+	private  Integer activityStatus;
+
+	@Column(name = "suspect_break_status")
+	private  Integer suspectBreakStatus;
+
+	@Column(name = "recall_status")
+	private  Integer recallStatus;
 
 	@Column(name = "current_longitude", length = 50)
 	private String currentLongitude;
@@ -142,6 +172,102 @@ public class BikeInfo implements Serializable{
 
 	public Integer getBicycleStatus() {
 		return bicycleStatus;
+	}
+
+	public Integer getBatteryStatus() {
+		return batteryStatus;
+	}
+
+	public void setBatteryStatus(Integer batteryStatus) {
+		this.batteryStatus = batteryStatus;
+	}
+
+	public Integer getBindingStatus() {
+		return bindingStatus;
+	}
+
+	public void setBindingStatus(Integer bindingStatus) {
+		this.bindingStatus = bindingStatus;
+	}
+
+	public Integer getBreakStatus() {
+		return breakStatus;
+	}
+
+	public void setBreakStatus(Integer breakStatus) {
+		this.breakStatus = breakStatus;
+	}
+
+	public Integer getChargeStatus() {
+		return chargeStatus;
+	}
+
+	public void setChargeStatus(Integer chargeStatus) {
+		this.chargeStatus = chargeStatus;
+	}
+
+	public Integer getCorpse_status() {
+		return corpse_status;
+	}
+
+	public void setCorpse_status(Integer corpse_status) {
+		this.corpse_status = corpse_status;
+	}
+
+	public Integer getFence_status() {
+		return fence_status;
+	}
+
+	public void setFence_status(Integer fence_status) {
+		this.fence_status = fence_status;
+	}
+
+	public Integer getOnlineStatus() {
+		return onlineStatus;
+	}
+
+	public void setOnlineStatus(Integer onlineStatus) {
+		this.onlineStatus = onlineStatus;
+	}
+
+	public Integer getRideStatus() {
+		return rideStatus;
+	}
+
+	public void setRideStatus(Integer rideStatus) {
+		this.rideStatus = rideStatus;
+	}
+
+	public Integer getShutdownStatus() {
+		return shutdownStatus;
+	}
+
+	public void setShutdownStatus(Integer shutdownStatus) {
+		this.shutdownStatus = shutdownStatus;
+	}
+
+	public Integer getActivityStatus() {
+		return activityStatus;
+	}
+
+	public void setActivityStatus(Integer activityStatus) {
+		this.activityStatus = activityStatus;
+	}
+
+	public Integer getSuspectBreakStatus() {
+		return suspectBreakStatus;
+	}
+
+	public void setSuspectBreakStatus(Integer suspectBreakStatus) {
+		this.suspectBreakStatus = suspectBreakStatus;
+	}
+
+	public Integer getRecallStatus() {
+		return recallStatus;
+	}
+
+	public void setRecallStatus(Integer recallStatus) {
+		this.recallStatus = recallStatus;
 	}
 
 	public void setBicycleStatus(Integer bicycleStatus) {
@@ -259,5 +385,5 @@ public class BikeInfo implements Serializable{
 	public void setLastConnectTime(Date lastConnectTime) {
 		this.lastConnectTime = lastConnectTime;
 	}
-	
+
 }

@@ -1,9 +1,13 @@
 package com.qiyuan.dao;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
+import com.qiyuan.pojo.BasePojo;
 import org.hibernate.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
@@ -317,12 +321,75 @@ public class DataDao {
 	/**
 	 * 用SQL文批量删除数据集
 	 * 
-	 * @param hql
+	 * @param sql
 	 *            删除sql语句
 	 */
 	public void deleteBySql(String sql) {
 		SQLQuery query = getSession().createSQLQuery(sql);
 		query.executeUpdate();
 	}
-	
+
+
+	/**
+	 * 获得数据的count
+	 * @param sql
+	 * @param obj
+	 * @return
+	 * @throws IllegalArgumentException
+	 */
+	public Integer getInfoCount(String sql,Object...obj) throws  IllegalArgumentException{
+		checkIsLegal(sql,obj);
+		Query query = setConditionParam(sql,obj);
+		Object o = query.uniqueResult();
+		return o==null?null:(Integer)o;
+	}
+
+	/**
+	 * 检查参数是否合法
+	 * @param sql
+	 * @param obj
+	 * @throws IllegalArgumentException
+	 */
+	private  void  checkIsLegal(String sql,Object...obj) throws IllegalArgumentException{
+
+		if ("".equals(sql)|| null==sql){
+			throw  new  IllegalArgumentException("sql语句不能为null or 空字符串");
+		}
+
+		if (null==obj || "".equals(obj)){
+			throw  new  IllegalArgumentException("条件参数不能为null or 空字符串");
+		}
+		if (obj.length == 0){
+			throw  new  IllegalArgumentException("条件参数不能为0");
+		}
+	}
+
+	/**
+	 * 赋值条件参数
+	 * @param sql
+	 * @param obj
+	 */
+	private  Query  setConditionParam(String sql,Object...obj) throws IllegalArgumentException{
+		Query query = getSession().createQuery(sql);
+		if ( null==query) {
+			throw  new  IllegalArgumentException("query不能为null");
+		}
+
+		for (int i = 0; i <obj.length ; i++) {
+			final  Object val=obj[i];
+			if (val instanceof  String){
+				query.setString(i, (String) val);
+			}else  if (val instanceof Integer ){
+				query.setInteger(i, (Integer) val);
+			}else  if (val instanceof  Long){
+				query.setLong(i,(Long) val);
+			}else if (val instanceof Date){
+                 query.setDate(i,(Date) val);
+			}else {
+				throw  new  IllegalArgumentException("参数必须是String or Integer or Long  or Date类型");
+			}
+
+		}
+		return  query;
+	}
 }

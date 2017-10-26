@@ -16,4 +16,6 @@ public interface IBikeService {
 
 	public abstract BikeInfo getBikeInfoBySimNo(String SimNo);
 
+	Integer getBikecUnbundlingNum(String simNO);
+
 }

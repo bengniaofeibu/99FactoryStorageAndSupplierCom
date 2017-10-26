@@ -11,17 +11,16 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name="t_lock_factory_employee")
-public class LockFactoryEmployeeInfo implements Serializable{
+public class LockFactoryEmployeeInfo extends BasePojo{
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 1461967774682435314L;
-
 
 	@Id
 	@GenericGenerator(name="uuid",strategy="uuid")

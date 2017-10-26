@@ -3,17 +3,26 @@ package com.qiyuan.factorStorageController;
 import com.daoshun.exception.NullParameterException;
 import com.qiyuan.Base.BaseController;
 import com.qiyuan.entity.Result;
+import com.qiyuan.pojo.BikeInfo;
+import com.qiyuan.service.IBikeService;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.omg.CORBA.ARG_IN;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 
 
@@ -24,13 +33,14 @@ import java.util.Map;
  * Time: 13:58
  */
 @RestController
-@RequestMapping(value = "/FactoryStoragePro")
 public class FactorStorageController  extends BaseController {
 
      private  static Log LOGGER= LogFactory.getLog(FactorStorageController.class);
 
+    @Resource
+    private IBikeService bikeService;
 
-    @PostMapping(value = "/supplier")
+    @PostMapping(value = "/SupplierComPro/supplier")
     public void supplier(HttpServletRequest request, HttpServletResponse response){
         try {
             callingService(request, response);
@@ -40,7 +50,7 @@ public class FactorStorageController  extends BaseController {
             LOGGER.error("ERROR: " + e.getMessage());
         }
     }
-    @PostMapping(value = "/factory")
+    @PostMapping(value = "/FactoryStoragePro/factory")
     public Result factory(HttpServletRequest request, HttpServletResponse response){
         Result result = null;
         try {
@@ -53,9 +63,18 @@ public class FactorStorageController  extends BaseController {
         return  result;
     }
 
+    @GetMapping(value = "/testt")
+    private  Integer  test(String simNo){
+        return bikeService.getBikecUnbundlingNum(simNo);
+    }
+
     public static void main(String[] args) {
-        String [][]  aaaa={{"aaaa","aaaa"},{"dev","ddddd"},{"ded","deede"},{"ccd","deded"}};
-        Map<Object, Object> objectObjectMap = ArrayUtils.toMap(aaaa);
-        System.out.println(objectObjectMap);
+        String aa="aaaa:ccc:bbb:dddd";
+        String[] split = aa.split(":");
+        StringBuilder StringBuilder=new StringBuilder();
+        for (int i = 0; i < split.length; i++) {
+            StringBuilder.append(split[i]);
+        }
+        System.out.println(StringBuilder.toString());
     }
 }
