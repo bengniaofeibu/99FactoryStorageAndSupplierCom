@@ -9,8 +9,10 @@ import com.google.gson.reflect.TypeToken;
 import com.qiyuan.baiduUtil.BaiduYingYanUtilTest;
 import com.qiyuan.common.*;
 import com.qiyuan.entity.Result;
+import com.qiyuan.enums.EnumService;
 import com.qiyuan.enums.LockReponseEnum;
 import com.qiyuan.enums.ServiceNameEnum;
+import com.qiyuan.enums.SupplierEnum;
 import com.qiyuan.pojo.*;
 import com.qiyuan.service.*;
 import com.qiyuan.terminalService.ApiClientConstantService;
@@ -47,11 +49,13 @@ public class BaseController extends HttpServlet {
 
     private  static  final  String WL_START_NO="50";
 
+    private  static  final String  CHANGE_LOCK_SUPPLIER_NAME="锁厂换锁绑定";
+
     @Resource
     private ILockTerminalService lockTerminalService;
     @Resource
     private IBikeService bikeService;
-    @Resource
+    @Resource(name = "lockGPRSRealDataService")
     private ILockGPSRealDataService lockGPRSRealDataService;
     @Resource
     private IAppVersionInfoService appVersionInfoService;
@@ -95,7 +99,7 @@ public class BaseController extends HttpServlet {
     //接口入口
     protected Result callingService(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        Result result;
+        Result result=null;
         try {
             String action = getAction(request, response);
 
@@ -160,6 +164,9 @@ public class BaseController extends HttpServlet {
                     //根据iccid获取车辆锁的状态
                     result=apiClientConstantService.callWebService(iccid);
                     return  result;
+                case Constant.GETBIKEINFO:
+                    getBikeInfo(request,response);
+                 break;
                 default:
                     throw new NullParameterException();
             }
@@ -184,6 +191,12 @@ public class BaseController extends HttpServlet {
                      break;
                     case Constant.DEREGISTRATION:
                         deregistration(request,response);
+                     break;
+                    case Constant.GET_BICK_SUPPLIER_NAME:
+                        getBickSupplierName(response);//根据车辆浩获取厂商名称
+                     break;
+                    case Constant.CHANGE_BICYCLE_LOCK:
+                         changeBicycleLock(response); //锁厂换锁绑定
                      break;
                      default:
                          throw new NullParameterException();
@@ -375,6 +388,40 @@ public class BaseController extends HttpServlet {
         System.out.println(adminCid);
         CommonUtils.validateEmpty(adminCid);
     }
+
+    private void getBikeInfo(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
+        Map<String, Object> resultMap = new HashMap<String, Object>();
+        String unknownNo =request.getParameter("unknownNo");
+        CommonUtils.validateEmpty(unknownNo);
+
+        if (12==unknownNo.length()){
+            BikeInfo bikeInfo=bikeService.getBikeInfo(unknownNo);
+            if (null!=bikeInfo){
+                resultMap.put("result", "ok");
+                resultMap.put("bikeInfo",bikeInfo);
+                resultMap.put("message", "获取信息成功！");
+            }else {
+                resultMap.put("result", "fail");
+                resultMap.put("message", "该设备id未注册！");
+            }
+        }else if (9==unknownNo.length()){
+            BikeInfo bikeInfo=bikeService.getBikeInfoByUnknowNo(Integer.parseInt(unknownNo));
+            if (null!=bikeInfo){
+                resultMap.put("result", "ok");
+                resultMap.put("bikeInfo",bikeInfo);
+                resultMap.put("message", "获取信息成功！");
+            }else {
+                resultMap.put("result", "fail");
+                resultMap.put("message", "该车辆id未注册！");
+            }
+        }else {
+            resultMap.put("result", "fail");
+            resultMap.put("message", "非法id！");
+        }
+        setResult(response,resultMap);
+    }
+
+
 
 
     protected void getBarcodeBySimNo(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
@@ -1661,9 +1708,9 @@ public class BaseController extends HttpServlet {
         //判断是simno是否存在，如果存在提示
         BikeInfo bikeInfoBySimNo = bikeService.getBikeInfoBySimNo(simNo);
         if (null!= bikeInfoBySimNo){
-           final boolean contains = StringCommonUtil.contains(getBicycleNum(barcode), WL_START_NO);
+           final boolean isStartsWithStr = StringCommonUtil.startsWithStr(getBicycleNum(barcode), WL_START_NO);
            //判断是否是物联的
-            if (contains) {
+            if (isStartsWithStr) {
               final int cityNo=bikeInfoBySimNo.getCityNo();
               final int count = bikeService.getBikecUnbundlingNum(simNo);
                 //判断是否已经解绑了 如果CityNo等于0并且count==0
@@ -2093,6 +2140,29 @@ public class BaseController extends HttpServlet {
 
     }
 
+    /**
+     * 根据bicycleNum获取厂家名称
+     * @param response
+     */
+    private  void  getBickSupplierName(HttpServletResponse response){
+        try {
+            String bicycleNum = getReqParam("bicycleNum");
+            BikeOutStorgeInfo storgeInfo = bikeOutStorgeService.getBikeOutInfoByBicycleNum(bicycleNum);
+            if (storgeInfo !=null ){
+                Map<String,Object> resultMap=getReponseMap(SupplierEnum.GETBICKSUPPLIERNAME_OK,storgeInfo.getSupplierName());
+                setResult(response,resultMap);
+            } else {
+                Map<String,Object> resultMap=getReponseMap(SupplierEnum.GETBICKSUPPLIERNAME_UNFOUND,storgeInfo.getSupplierName());
+                setResult(response,resultMap);
+            }
+        }catch (Exception e){
+              LOGGER.error(e);
+             setResultWhenException(response,e.getMessage());
+        }
+
+    }
+
+
     private void uploadSupplierInfo(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
         Map<String,Object> resultMap=new HashMap<>();
         String supplierName = request.getParameter("supplierName");
@@ -2102,6 +2172,7 @@ public class BaseController extends HttpServlet {
         CommonUtils.validateEmpty(supplierPassword);
         try{
             SupplierInfo supplierInfo = supplierService.getSupplierInfoByNameAndPassword(supplierName,supplierPassword);
+            List<String> allsupplieName = supplierService.getAllsupplieName();
             if(supplierInfo != null){
                 supplierInfo.setLoginState(2);
                 supplierInfo.setLoginTime(new Date());
@@ -2109,6 +2180,9 @@ public class BaseController extends HttpServlet {
                 resultMap.put("code", Constant.Success);
                 resultMap.put("message", "获取供应商信息成功");
                 resultMap.put("supplierId", supplierInfo.getId());
+                if (CHANGE_LOCK_SUPPLIER_NAME.equals(supplierName)){
+                    resultMap.put("allsupplieName",allsupplieName);
+                }
             }else{
                 resultMap.put("code", Constant.Error_SupplierLogin);
                 resultMap.put("message", "获取供应商信息失败");
@@ -2120,6 +2194,38 @@ public class BaseController extends HttpServlet {
         }
         setResult(response,resultMap);
     }
+
+
+    /**
+     * 车厂换锁绑定
+     */
+    private void changeBicycleLock(HttpServletResponse response){
+        try {
+            String bicycleNum = getReqParam("bicycleNum");
+            String bicycleModel = getReqParam("bicycleModel");
+            String supplierName = getReqParam("supplierName");
+            BikeOutStorgeInfo changeInfo = new BikeOutStorgeInfo();
+            changeInfo.setBicycleNo(Integer.parseInt(bicycleNum));
+            changeInfo.setBicycleModel(bicycleModel);
+            changeInfo.setAddTime(new Date());
+            changeInfo.setDelFlag(0);
+            if (StringCommonUtil.startsWithStr(bicycleNum,"5")) {
+                changeInfo.setBicycleType(5);
+            } else {
+                changeInfo.setBicycleType(1);
+            }
+            changeInfo.setSupplierName(supplierName);
+            changeInfo.setAddType(1);
+            bikeOutStorgeService.addChangeLockInfo(changeInfo);
+            Map<String, Object> reponseMap = getReponseMap(SupplierEnum.CHANGELOCK_OK);
+            setResult(response, reponseMap);
+        } catch (NullParameterException e) {
+            LOGGER.error(e);
+            setResultWhenException(response,e.getMessage());
+        }
+
+    }
+
 
     private void uploadBicycleNum(HttpServletRequest request,HttpServletResponse response) throws NullParameterException {
         Map<String, Object> resultMap = new HashMap<>();
@@ -2219,8 +2325,10 @@ public class BaseController extends HttpServlet {
          * @param name
          * @return
          */
-    private String getReqParam(String name){
-          return  this.getRequest().getParameter(name);
+    private String getReqParam(String name) throws NullParameterException {
+        String parameter = this.getRequest().getParameter(name);
+        CommonUtils.validateEmpty(parameter);
+          return parameter ;
     }
 
 
@@ -2305,5 +2413,31 @@ public class BaseController extends HttpServlet {
                 return  barcodeURL.substring(index + 2);
           }
           return  "";
+    }
+
+    /**
+     * 返回参数Map
+     * @param enumService
+     * @param obj
+     * @return
+     */
+    public  Map<String,Object> getReponseMap(EnumService enumService,Object obj){
+            Map<String,Object> map=new HashMap<>();
+            map.put("code",enumService.getCode());
+            map.put("message",enumService.getMessage());
+            map.put("data",obj);
+         return  map;
+    }
+
+    /**
+     * 返回参数Map
+     * @param enumService
+     * @return
+     */
+    public  Map<String,Object> getReponseMap(EnumService enumService){
+        Map<String,Object> map=new HashMap<>();
+        map.put("code",enumService.getCode());
+        map.put("message",enumService.getMessage());
+        return  map;
     }
 }

@@ -28,7 +28,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 
 
-@WebServlet("/factory")
+@WebServlet("/")
 public class FactoryStorageServlet extends BaseServlet{
 
 	/**

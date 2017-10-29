@@ -1,11 +1,11 @@
 server:
-    address: 172.16.20.70
-    port: 8080
+    address: localhost
+    port: 8082
 
 #spring配置
 spring:
     profiles:
-      active: dev
+      active: prod
     http:
       encoding:
         charset: utf-8

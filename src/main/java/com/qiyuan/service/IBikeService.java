@@ -18,4 +18,8 @@ public interface IBikeService {
 
 	Integer getBikecUnbundlingNum(String simNO);
 
+	BikeInfo getBikeInfo(String simNo);
+
+	BikeInfo getBikeInfoByUnknowNo(Integer unknowNo);
+
 }

@@ -8,10 +8,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.qiyuan.pojo.BasePojo;
-import org.hibernate.Query;
-import org.hibernate.SQLQuery;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
+import org.hibernate.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -38,7 +35,10 @@ public class DataDao {
 	 * @param 需要添加的对象
 	 */
 	public void addObject(Object o) {
+//		Session session=getSession();
+//		Transaction tx=getSession().beginTransaction();
 		getSession().save(o);
+//		tx.commit();
 	}
 
 	/**
@@ -329,6 +329,15 @@ public class DataDao {
 		query.executeUpdate();
 	}
 
+	/**
+	 * 获取所有数据
+	 * @param sql
+	 * @return
+	 */
+   public  List<?> getALLData(String sql){
+	   SQLQuery sqlQuery = getSession().createSQLQuery(sql);
+       return sqlQuery.list();
+   }
 
 	/**
 	 * 获得数据的count

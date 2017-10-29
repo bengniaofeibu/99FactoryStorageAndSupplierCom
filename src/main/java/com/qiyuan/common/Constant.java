@@ -231,6 +231,12 @@ public class Constant {
 
 	public static final String DEREGISTRATION = "DEREGISTRATION";
 
+	public static final String GETBIKEINFO = "GETBIKEINFO";
+
+	public static final  String GET_BICK_SUPPLIER_NAME="GETBICKSUPPLIERNAME";
+
+    public static final  String CHANGE_BICYCLE_LOCK="CHANGEBICYCLELOCK";
+
 	public static final int Fail=524;
 
 	/****************** 获取锁状态的接口 ******************/

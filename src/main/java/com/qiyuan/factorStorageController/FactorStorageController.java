@@ -5,6 +5,8 @@ import com.qiyuan.Base.BaseController;
 import com.qiyuan.entity.Result;
 import com.qiyuan.pojo.BikeInfo;
 import com.qiyuan.service.IBikeService;
+import com.qiyuan.service.ISupplierService;
+import com.qiyuan.utils.StringCommonUtil;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -23,6 +25,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 
@@ -40,7 +43,10 @@ public class FactorStorageController  extends BaseController {
     @Resource
     private IBikeService bikeService;
 
-    @PostMapping(value = "/SupplierComPro/supplier")
+    @Resource
+    private ISupplierService iSupplierService;
+
+    @PostMapping(value = "/supplier")
     public void supplier(HttpServletRequest request, HttpServletResponse response){
         try {
             callingService(request, response);
@@ -63,18 +69,14 @@ public class FactorStorageController  extends BaseController {
         return  result;
     }
 
-    @GetMapping(value = "/testt")
-    private  Integer  test(String simNo){
-        return bikeService.getBikecUnbundlingNum(simNo);
+    @GetMapping(value = "/test1111")
+    private List<String> test(String simNo){
+        return iSupplierService.getAllsupplieName();
     }
 
     public static void main(String[] args) {
-        String aa="aaaa:ccc:bbb:dddd";
-        String[] split = aa.split(":");
-        StringBuilder StringBuilder=new StringBuilder();
-        for (int i = 0; i < split.length; i++) {
-            StringBuilder.append(split[i]);
-        }
-        System.out.println(StringBuilder.toString());
+        String aaaa="500010918";
+        boolean b = StringCommonUtil.startsWithStr(aaaa, "5");
+        System.out.println(b);
     }
 }

@@ -8,13 +8,13 @@ public class StringCommonUtil {
 
 
     /**
-     * 检查字符串(val1)中是否存在(val2)字符
+     * 检查字符串(val1)中开头是否是(val2)字符
      * @param val1
      * @param val2
      * @return
      */
-    public static boolean contains(String val1,String val2){
-         return StringUtils.contains(val1,val2);
+    public static boolean startsWithStr(String val1,String val2){
+         return StringUtils.startsWith(val1,val2);
     }
 
     /**
@@ -34,6 +34,6 @@ public class StringCommonUtil {
 
     public static void main(String[] args) {
 
-        System.out.println(StringCommonUtil.contains("500066541","59"));
+        System.out.println(StringCommonUtil.startsWithStr("500066541","50"));
     }
 }

@@ -6,9 +6,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service("supplierService")
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class SupplierServiceImpl extends BaseServiceImpl implements ISupplierService {
+
+
+	private  static  final  String GET_ALL_SUPPLIER_NAME="select info.supplier_name from t_supplier_info  as info where supplier_name!='锁厂换锁绑定'";
 
 	@Override
 	public SupplierInfo getSupplierInfoByNameAndPassword(String supplierName, String supplierPassword) {
@@ -33,6 +38,11 @@ public class SupplierServiceImpl extends BaseServiceImpl implements ISupplierSer
 	public void updateSupplierInfo(SupplierInfo supplierInfo) {
 		dataDao.updateObject(supplierInfo);
 		
+	}
+
+	@Override
+	public List<String> getAllsupplieName() {
+		return (List<String>) dataDao.getALLData(GET_ALL_SUPPLIER_NAME);
 	}
 
 }

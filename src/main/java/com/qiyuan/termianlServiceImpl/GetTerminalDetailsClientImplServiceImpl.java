@@ -182,15 +182,15 @@ public class GetTerminalDetailsClientImplServiceImpl implements ApiClientConstan
         };
         InputStream policyStream = null;
         XWSSProcessor processor = null;
-        try {
-            policyStream = getClass().getClassLoader().getResourceAsStream("soap/securityPolicy.xml");
-            processor = processorFactory.createProcessorForSecurityConfiguration(policyStream, callbackHandler);
-        }
-        finally {
-            if (policyStream != null) {
-                policyStream.close();
-            }
-        }
+//        try {
+//            policyStream = getClass().getClassLoader().getResourceAsStream("soap/securityPolicy.xml");
+//            processor = processorFactory.createProcessorForSecurityConfiguration(policyStream, callbackHandler);
+//        }
+//        finally {
+//            if (policyStream != null) {
+//                policyStream.close();
+//            }
+//        }
         ProcessingContext context = processor.createProcessingContext(message);
         return processor.secureOutboundMessage(context);
     }

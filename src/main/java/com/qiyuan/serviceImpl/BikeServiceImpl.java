@@ -67,6 +67,23 @@ public class BikeServiceImpl extends BaseServiceImpl implements IBikeService{
 		return info;
 	}
 
+	@Override
+	public BikeInfo getBikeInfo(String simNo) {
+		StringBuffer shql=new StringBuffer();
+		shql.append("select new BikeInfo(bicycleNo,addTime,simNo,gprsNo)from BikeInfo where simNo=:simNo");
+		String[] params = { "simNo" };
+		BikeInfo info= (BikeInfo) dataDao.getFirstObjectViaParam(shql.toString(),params,simNo);
+		return info;
+	}
+
+	@Override
+	public BikeInfo getBikeInfoByUnknowNo(Integer unknowNo) {
+		StringBuffer shql=new StringBuffer();
+		shql.append("select new BikeInfo(bicycleNo,addTime,simNo,gprsNo)from BikeInfo where bicycleNo=:unknowNo");
+		String[] params = { "unknowNo" };
+		BikeInfo info= (BikeInfo) dataDao.getFirstObjectViaParam(shql.toString(),params,unknowNo);
+		return info;
+	}
 
 	/**
 	 * 根据simno查出车辆是否解绑

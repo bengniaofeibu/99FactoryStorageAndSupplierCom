@@ -22,7 +22,7 @@ import com.qiyuan.baiduUtil.BaiduYingYanUtilTest;
 import com.qiyuan.common.CommonUtils;
 import com.qiyuan.common.Constant;
 
-@WebServlet("/supplier")
+@WebServlet("")
 public class SupplierServlet extends BaseServlet{
 
 	/**

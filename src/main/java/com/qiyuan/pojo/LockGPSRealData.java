@@ -75,7 +75,7 @@ public class LockGPSRealData extends BasePojo {
 	
 	//报警标志
 	@Column(name = "alarmState")
-	private int alarmState;
+	private Integer alarmState;
 	
 	//信号强度
 	@Column(name = "signal_intensity")
@@ -205,11 +205,11 @@ public class LockGPSRealData extends BasePojo {
 		this.status = status;
 	}
 
-	public int getAlarmState() {
+	public Integer getAlarmState() {
 		return alarmState;
 	}
 
-	public void setAlarmState(int alarmState) {
+	public void setAlarmState(Integer alarmState) {
 		this.alarmState = alarmState;
 	}
 

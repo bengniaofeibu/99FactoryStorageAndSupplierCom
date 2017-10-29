@@ -39,6 +39,10 @@ public class BikeOutStorgeInfo extends BasePojo{
 	@Column(name = "bicycle_model",length = 2,nullable = false)
 	private String bicycleModel;
 
+	//车辆绑定类型(0:车厂扫码注册,1锁厂换锁绑定)
+	@Column(name = "add_type",length = 2,nullable = false)
+	private int addType;
+
 	public String getBicycleModel() {
 		return bicycleModel;
 	}
@@ -95,4 +99,11 @@ public class BikeOutStorgeInfo extends BasePojo{
 		this.addTime = addTime;
 	}
 
+	public int getAddType() {
+		return addType;
+	}
+
+	public void setAddType(int addType) {
+		this.addType = addType;
+	}
 }

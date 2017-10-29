@@ -35,6 +35,12 @@ public class BikeOutStorgeServiceImpl extends BaseServiceImpl implements IBikeOu
 		
 	}
 
+	@Transactional
+	@Override
+	public void addChangeLockInfo(BikeOutStorgeInfo ChangeLockInfo) {
+        dataDao.addObject(ChangeLockInfo);
+	}
+
 	@Override
 	public Integer getQuantityToday(String supplierId,String bicycleModel,String bicycleType) {
 		String sql="SELECT COUNT(*) FROM t_bike_out_storge_info t WHERE TO_DAYS(t.add_time)=TO_DAYS(NOW()) and t.bicycle_model='"+bicycleModel+"' and t.bicycle_type='"+bicycleType+"' and t.del_flag = '0' and t.supplier_name in (SELECT s.supplier_name FROM t_supplier_info s where s.id='"+supplierId+"')";

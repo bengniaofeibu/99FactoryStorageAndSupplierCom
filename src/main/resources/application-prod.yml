@@ -1,7 +1,7 @@
 spring:
   #数据源的配置
   datasource:
-    url: jdbc:mysql://rm-uf6747h40s8g1841lo.mysql.rds.aliyuncs.com:3306/electric_bicycle_pro_test?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false
+    url: jdbc:mysql://rm-uf69rclygox273t10.mysql.rds.aliyuncs.com:3306/electric_bicycle_pro?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false
     username: jjdc_123
     password: jjdc_99bicycle
     driver-class-name: com.mysql.jdbc.Driver

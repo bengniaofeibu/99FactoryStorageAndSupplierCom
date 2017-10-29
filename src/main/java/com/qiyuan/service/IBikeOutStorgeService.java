@@ -10,6 +10,8 @@ public interface IBikeOutStorgeService {
 
 	public abstract void addInfo(BikeOutStorgeInfo newInfo);
 
+	void addChangeLockInfo(BikeOutStorgeInfo ChangeLockInfo);
+
 	public abstract Integer getQuantityToday(String supplierId, String bicycleModel, String bicycleType);
 
 	public abstract Integer getFGQuantityToday(String supplierId);
