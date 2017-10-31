@@ -1,5 +1,6 @@
 package com.qiyuan.serviceImpl;
 
+import com.qiyuan.pojo.BikeUpdateInfo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -93,5 +94,15 @@ public class BikeServiceImpl extends BaseServiceImpl implements IBikeService{
 	@Override
 	public Integer getBikecUnbundlingNum(String simNO) {
 		return dataDao.getInfoCount(BIKEC_UNBUNDLING_NUM,simNO);
+	}
+
+
+	/**
+	 * 记录车辆更新信息
+	 * @param bikeUpdateInfo
+	 */
+	@Override
+	public void recordBikeUpdateInfo(BikeUpdateInfo bikeUpdateInfo) {
+        dataDao.addObject(bikeUpdateInfo);
 	}
 }

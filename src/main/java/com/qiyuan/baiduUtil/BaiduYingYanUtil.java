@@ -5,6 +5,12 @@ import java.util.Map;
 public class BaiduYingYanUtil {
 
 	private static String recEncoding = "UTF-8";
+
+
+	private  static  final String OPEN_BATTERY_LOCK_URL="http://99company.99bicycle.com:8081/lock?action=OPENBATTERYLOCK";
+
+	private  static  final String CONTROL_LECTRIC_LOCK_URL ="http://99company.99bicycle.com:8081/lock?action=CONTROLELECTRICLOCK";
+
 	public static String getRecEncoding() {
 		return recEncoding;
 	}
@@ -138,5 +144,14 @@ public class BaiduYingYanUtil {
 		String url = "http://yingyan.baidu.com/api/v3/entity/update";
 		return HttpRequestProxy.doPost(url, params , getRecEncoding());
 	}
-	
+
+	//开助力车电池锁
+	public static String openMopedBatteryLock(Map<String,Object> params){
+		return HttpRequestProxy.doPost(OPEN_BATTERY_LOCK_URL, params , getRecEncoding());
+	}
+
+	//操作助力车电机锁接口
+	public static String controlMopedElectriclock(Map<String,Object> params){
+		return HttpRequestProxy.doPost(CONTROL_LECTRIC_LOCK_URL, params , getRecEncoding());
+	}
 }

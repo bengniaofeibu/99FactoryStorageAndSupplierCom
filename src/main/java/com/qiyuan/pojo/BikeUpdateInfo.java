@@ -13,14 +13,14 @@ public class BikeUpdateInfo extends  BasePojo {
     @Column(name = "id", length = 20, nullable = false)
     private Long id;
 
-    @Column(name = "bicycle_no_old",nullable = false)
-    private  String bicycleNoOld;
+    @Column(name = "bicycle_no_old",length = 10,nullable = false)
+    private  Integer bicycleNoOld;
 
     @Column(name = "bicycle_no_new",nullable = false)
     private String bicycleNoNew;
 
     @Column(name = "bluetooth_mac_old",nullable = false)
-    private  String bluetoothMcOld;
+    private  String bluetoothMacOld;
 
     @Column(name = "bluetooth_mac_new",nullable = false)
     private String bluetoothMacNew;
@@ -42,7 +42,7 @@ public class BikeUpdateInfo extends  BasePojo {
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "add_time_old",nullable = false)
-    private Date add_time_old;
+    private Date addTimeOld;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "add_time_new",nullable = false)
@@ -64,11 +64,11 @@ public class BikeUpdateInfo extends  BasePojo {
         this.id = id;
     }
 
-    public String getBicycleNoOld() {
+    public Integer getBicycleNoOld() {
         return bicycleNoOld;
     }
 
-    public void setBicycleNoOld(String bicycleNoOld) {
+    public void setBicycleNoOld(Integer bicycleNoOld) {
         this.bicycleNoOld = bicycleNoOld;
     }
 
@@ -80,12 +80,12 @@ public class BikeUpdateInfo extends  BasePojo {
         this.bicycleNoNew = bicycleNoNew;
     }
 
-    public String getBluetoothMcOld() {
-        return bluetoothMcOld;
+    public String getBluetoothMacOld() {
+        return bluetoothMacOld;
     }
 
-    public void setBluetoothMcOld(String bluetoothMcOld) {
-        this.bluetoothMcOld = bluetoothMcOld;
+    public void setBluetoothMacOld(String bluetoothMcOld) {
+        this.bluetoothMacOld = bluetoothMcOld;
     }
 
     public String getBluetoothMacNew() {
@@ -136,12 +136,12 @@ public class BikeUpdateInfo extends  BasePojo {
         this.simNo = simNo;
     }
 
-    public Date getAdd_time_old() {
-        return add_time_old;
+    public Date getAddTimeOld() {
+        return addTimeOld;
     }
 
-    public void setAdd_time_old(Date add_time_old) {
-        this.add_time_old = add_time_old;
+    public void setAddTimeOld(Date addTimeOld) {
+        this.addTimeOld = addTimeOld;
     }
 
     public Date getAddTimeNew() {
@@ -174,14 +174,14 @@ public class BikeUpdateInfo extends  BasePojo {
                 "id=" + id +
                 ", bicycleNoOld='" + bicycleNoOld + '\'' +
                 ", bicycleNoNew='" + bicycleNoNew + '\'' +
-                ", bluetoothMcOld='" + bluetoothMcOld + '\'' +
+                ", bluetoothMacOld='" + bluetoothMacOld + '\'' +
                 ", bluetoothMacNew='" + bluetoothMacNew + '\'' +
                 ", newKeyOld='" + newKeyOld + '\'' +
                 ", newKeyNew='" + newKeyNew + '\'' +
                 ", newPasswordOld='" + newPasswordOld + '\'' +
                 ", newPasswordNew='" + newPasswordNew + '\'' +
                 ", simNo='" + simNo + '\'' +
-                ", add_time_old=" + add_time_old +
+                ", addTimeOld=" + addTimeOld +
                 ", addTimeNew=" + addTimeNew +
                 ", createTime=" + createTime +
                 ", updateTime=" + updateTime +

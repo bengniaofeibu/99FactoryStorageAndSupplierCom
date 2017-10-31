@@ -1,5 +1,8 @@
 package com.qiyuan.baiduUtil;
 
+import com.gexin.fastjson.JSON;
+import org.springframework.stereotype.Component;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,10 +11,12 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+@Component
 public class HttpRequestProxy {
 	/**
 	 * ���ӳ�ʱ
@@ -27,6 +32,14 @@ public class HttpRequestProxy {
 	 * �������
 	 */
 	private static String requestEncoding = "UTF-8";
+
+
+    public static void main(String[] args) {
+
+        Map mapTypes = JSON.parseObject("{\"code\":1,\"message\":\"发送成功\"}");
+        System.out.println(mapTypes.get("code"));
+    }
+
 
 	/**
 	 * <pre>

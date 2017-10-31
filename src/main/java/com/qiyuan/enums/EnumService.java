@@ -2,9 +2,11 @@ package com.qiyuan.enums;
 
 public interface EnumService {
 
-    int okCode=0;
+    String okCode="ok";
 
-    int getCode();
+    String failCode="fail";
+
+    String getCode();
 
     String getMessage();
 

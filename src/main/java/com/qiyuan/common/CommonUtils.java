@@ -977,7 +977,46 @@ public class CommonUtils {
 			return 2;
 		}
 	}
-	
+
+	//开助力车电池锁接口
+	public static int SendOpenMopedBatteryLock(String simNo){
+		Map<String,Object> params = new HashMap<String,Object>();
+		params.put("simNo", simNo);
+
+		JSONObject backResult;
+		try {
+			backResult = new JSONObject(BaiduYingYanUtil.openMopedBatteryLock(params));
+			String code = backResult.get("code").toString();
+			if(code.equals("1")){
+				return 1;
+			}else{
+				return 2;
+			}
+		} catch (JSONException e) {
+			e.printStackTrace();
+			return 2;
+		}
+	}
+    //操作助力车电机锁接口
+    public static int SendControlMopedElectriclock(String simNo,int flag){
+        Map<String,Object> params = new HashMap<String,Object>();
+        params.put("simNo", simNo);
+        params.put("flag",flag);
+        JSONObject backResult;
+        try {
+            backResult = new JSONObject(BaiduYingYanUtil.controlMopedElectriclock(params));
+            String code = backResult.get("code").toString();
+            if(code.equals("1")){
+                return 1;
+            }else{
+                return 2;
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return 2;
+        }
+    }
+
 	public static int SendQueryLockCmd(String simNo){
 		Map<String,Object> params = new HashMap<String,Object>();
 		params.put("simNo", simNo);
@@ -1030,5 +1069,5 @@ public class CommonUtils {
 
 	}
 
-	
+
 }

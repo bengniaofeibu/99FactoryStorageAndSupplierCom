@@ -1,6 +1,7 @@
 package com.qiyuan.service;
 
 import com.qiyuan.pojo.BikeInfo;
+import com.qiyuan.pojo.BikeUpdateInfo;
 
 public interface IBikeService {
 
@@ -21,5 +22,7 @@ public interface IBikeService {
 	BikeInfo getBikeInfo(String simNo);
 
 	BikeInfo getBikeInfoByUnknowNo(Integer unknowNo);
+
+	void  recordBikeUpdateInfo(BikeUpdateInfo bikeUpdateInfo);
 
 }

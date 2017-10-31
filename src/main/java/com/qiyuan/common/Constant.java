@@ -190,6 +190,10 @@ public class Constant {
 
 	public static final String GETBARCODEBYSIMNO = "GETBARCODEBYSIMNO";
 
+	public static  final  String OPEN_BATTERY_LOCK="OPENBATTERYLOCK";
+
+	public static  final  String CONTRO_LELECTRIC_LOCK="CONTROLELECTRICLOCK";
+
 	public static final String TEST = "TEST";
 
 
