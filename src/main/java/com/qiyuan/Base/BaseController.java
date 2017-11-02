@@ -274,6 +274,13 @@ public class BaseController extends HttpServlet {
         setResult(response,reponseMap);
     }
 
+    //返回result结果
+    protected void reponseResult(HttpServletResponse response,EnumService enumService,Object obj,String key,Object value){
+        Map<String, Object> reponseMap = getReponseMap(enumService,obj,key,value);
+        setResult(response,reponseMap);
+    }
+
+
     /**
      * 返回参数Map
      * @param enumService
@@ -286,6 +293,23 @@ public class BaseController extends HttpServlet {
             map.put("message",enumService.getMessage());
             map.put("data",obj);
          return  map;
+    }
+
+    /**
+     * 返回参数Map
+     * @param enumService
+     * @param obj
+     * @return
+     */
+    protected   Map<String,Object> getReponseMap(EnumService enumService,Object obj,String key,Object value){
+        Map<String,Object> map=new HashMap<>();
+        map.put("result",enumService.getCode());
+        map.put("message",enumService.getMessage());
+        map.put("data",obj);
+        if (key!=null && value!=null){
+             map.put(key,value);
+        }
+        return  map;
     }
 
     /**

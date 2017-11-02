@@ -22,7 +22,7 @@ management:
 
 
 
-#联通Soapapi
+#联通SoapApi
 LianTongSoapapiMessage:
    userName: panjuanjuan
    passWord: shjj123456

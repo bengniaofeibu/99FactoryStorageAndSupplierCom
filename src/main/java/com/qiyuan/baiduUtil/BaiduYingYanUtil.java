@@ -11,6 +11,10 @@ public class BaiduYingYanUtil {
 
 	private  static  final String CONTROL_LECTRIC_LOCK_URL ="http://99company.99bicycle.com:8081/lock?action=CONTROLELECTRICLOCK";
 
+	private  static  final  String GET_CANCELLATION_LOCK_INFO_URL="http://10.0.180.67/LockApi/lock?action=GETCANCELLATIONBIKEINFO";
+
+	private  static  final  String GET_BIKE_INFO_URL="http://10.0.180.67/LockApi/lock?action=GETBIKEINFO";
+
 	public static String getRecEncoding() {
 		return recEncoding;
 	}
@@ -153,5 +157,15 @@ public class BaiduYingYanUtil {
 	//操作助力车电机锁接口
 	public static String controlMopedElectriclock(Map<String,Object> params){
 		return HttpRequestProxy.doPost(CONTROL_LECTRIC_LOCK_URL, params , getRecEncoding());
+	}
+
+	//获取注销锁的信息接口
+	public static String getCancellationLockInfo(Map<String,Object> params){
+		  return  HttpRequestProxy.doPost(GET_CANCELLATION_LOCK_INFO_URL,params,getRecEncoding());
+	}
+
+    //获取车辆是否注销
+	public static String getBikeInfo(Map<String,Object> params){
+	    return HttpRequestProxy.doPost(GET_BIKE_INFO_URL,params,getRecEncoding());
 	}
 }

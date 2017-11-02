@@ -2,6 +2,8 @@ package com.qiyuan.service;
 
 import com.qiyuan.pojo.BikeInfo;
 import com.qiyuan.pojo.BikeUpdateInfo;
+import com.qiyuan.pojo.CancellationBikeInfo;
+import com.qiyuan.pojo.ElectricBikeInfo;
 
 public interface IBikeService {
 
@@ -24,5 +26,9 @@ public interface IBikeService {
 	BikeInfo getBikeInfoByUnknowNo(Integer unknowNo);
 
 	void  recordBikeUpdateInfo(BikeUpdateInfo bikeUpdateInfo);
+
+	CancellationBikeInfo getCancellationBikeInfo(String bicycleNum);
+
+	ElectricBikeInfo getMopedInfo(String bicycleNum);
 
 }

@@ -31,6 +31,8 @@ import java.util.UUID;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.servlet.http.HttpServletResponse;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 //import org.apache.log4j.Logger;
 import org.json.JSONException;
@@ -1016,6 +1018,34 @@ public class CommonUtils {
             return 2;
         }
     }
+
+    //获取注销锁的信息
+    public static JSONObject getCancellationLockInfo(String  bicycleNo){
+		Map<String,Object> params = new HashMap<>();
+		params.put("bicycleNo", bicycleNo);
+		JSONObject backResult;
+		try {
+		backResult = new JSONObject(BaiduYingYanUtil.getCancellationLockInfo(params));
+		  return  backResult;
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	//获取车辆是否注销
+	public  static  JSONObject getBikeInfo(String bicycleNo){
+		Map<String,Object> params = new HashMap<>();
+		params.put("bicycleNo", bicycleNo);
+		JSONObject backResult;
+		try {
+			backResult = new JSONObject(BaiduYingYanUtil.getBikeInfo(params));
+			return  backResult;
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 
 	public static int SendQueryLockCmd(String simNo){
 		Map<String,Object> params = new HashMap<String,Object>();

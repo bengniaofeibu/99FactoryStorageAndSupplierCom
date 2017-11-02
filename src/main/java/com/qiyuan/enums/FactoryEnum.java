@@ -24,7 +24,13 @@ public enum FactoryEnum implements EnumService{
 
     GET_BICYLE_LOCK_OK(okCode,"获取锁的状态成功"),
 
-    GET_BICYLE_LOCK_FAIL(failCode,"获取锁的状态失败");
+    GET_BICYLE_LOCK_FAIL(failCode,"获取锁的状态失败"),
+
+    GET_CANCELLATION_LOCK_INFO_OK(okCode,"获取注销锁信息成功"),
+
+    GET_CANCELLATION_LOCK_INFO_FAIL(failCode,"获取注销锁信息失败"),
+
+    GET_BIKE_INFO_FAIL(failCode,"车辆未被注销");
 
 
     public  String code;

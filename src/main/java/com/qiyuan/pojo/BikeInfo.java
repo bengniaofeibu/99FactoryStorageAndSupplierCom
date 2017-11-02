@@ -8,8 +8,8 @@ import javax.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
 
 @Entity
-//@Table(name="t_bike_info")
-@Table(name = "t_electric_bike_info")
+@Table(name="t_bike_info")
+//@Table(name = "t_electric_bike_info")
 public class BikeInfo extends BasePojo{
 
 	/**

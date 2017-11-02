@@ -14,6 +14,7 @@ import com.qiyuan.terminalService.ApiClientConstantService;
 import com.qiyuan.utils.StringCommonUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONObject;
 
 import javax.annotation.Resource;
 import javax.servlet.ServletException;
@@ -144,6 +145,9 @@ public class FactoryServerController extends BaseController{
                 case Constant.CONTRO_LELECTRIC_LOCK:
                     closeMopedLectricLock(request,response);//关助力车电机锁接口
                     break;
+                case Constant.GET_CANCELLATION_LOCK_INFO:
+                    getCancellationLockInfo(request,response); //获取注销锁的信息
+                    break;
                 default:
                     throw new NullParameterException();
             }
@@ -153,6 +157,7 @@ public class FactoryServerController extends BaseController{
             setResultWhenException(response, e.getMessage());
         }
     }
+
 
     //获取车辆锁的状态(联通)
     private  void getBicycleLockStatus(HttpServletResponse response){
@@ -170,7 +175,7 @@ public class FactoryServerController extends BaseController{
 
     }
 
-    protected void changeBarcode(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
+    private void changeBarcode(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
         Map<String, Object> resultMap = new HashMap<>();
         String newBarcode = "";
         String oldBarcode = "";
@@ -593,10 +598,19 @@ public class FactoryServerController extends BaseController{
                         resultMap.put("mac", CommonUtils.PackingFactoryInfo(info.getBluetoothMac(), "mac"));
                         resultMap.put("key", CommonUtils.PackingFactoryInfo(info.getNewKey(), "key"));
                         resultMap.put("pass",CommonUtils.PackingFactoryInfo(info.getNewPassword(), "pass"));
+                        resultMap.put("flag",1);
                     }else{
-                        resultMap.put("mac", "");
-                        resultMap.put("key", "");
-                        resultMap.put("pass","");
+                        CancellationBikeInfo cancellationBikeInfo = bikeService.getCancellationBikeInfo(bicycleNum);
+                        if (cancellationBikeInfo!=null){
+                            resultMap.put("mac", CommonUtils.PackingFactoryInfo(cancellationBikeInfo.getBluetoothMac(),"mac"));
+                            resultMap.put("key", CommonUtils.PackingFactoryInfo(cancellationBikeInfo.getNewKey(),"key"));
+                            resultMap.put("pass",CommonUtils.PackingFactoryInfo(cancellationBikeInfo.getNewPassword(),"pass"));
+                            resultMap.put("flag",0);
+                        } else {
+                            resultMap.put("mac", "");
+                            resultMap.put("key", "");
+                            resultMap.put("pass","");
+                        }
                     }
                 }else{
                     if(barcode.substring(0, 1).equals("5") && barcode.length() == 9){
@@ -605,10 +619,19 @@ public class FactoryServerController extends BaseController{
                             resultMap.put("mac", CommonUtils.PackingFactoryInfo(info.getBluetoothMac(), "mac"));
                             resultMap.put("key", CommonUtils.PackingFactoryInfo(info.getNewKey(), "key"));
                             resultMap.put("pass",CommonUtils.PackingFactoryInfo(info.getNewPassword(), "pass"));
+                            resultMap.put("flag",1);
                         }else{
-                            resultMap.put("mac", "");
-                            resultMap.put("key", "");
-                            resultMap.put("pass","");
+                            CancellationBikeInfo cancellationBikeInfo = bikeService.getCancellationBikeInfo(barcode);
+                            if (cancellationBikeInfo!=null){
+                                resultMap.put("mac", CommonUtils.PackingFactoryInfo(cancellationBikeInfo.getBluetoothMac(),"mac"));
+                                resultMap.put("key", CommonUtils.PackingFactoryInfo(cancellationBikeInfo.getNewKey(),"key"));
+                                resultMap.put("pass",CommonUtils.PackingFactoryInfo(cancellationBikeInfo.getNewPassword(),"pass"));
+                                resultMap.put("flag",0);
+                            } else {
+                                resultMap.put("mac", "");
+                                resultMap.put("key", "");
+                                resultMap.put("pass","");
+                            }
                         }
                     }else{
                         resultMap.put("mac", "");
@@ -692,6 +715,29 @@ public class FactoryServerController extends BaseController{
     }
 
 
+    //获取注销锁的信息
+    private void  getCancellationLockInfo(HttpServletRequest request,HttpServletResponse response){
+        Map<String, String> requestParam = getRequestParam(request);
+        String barcode = requestParam.get("barcode");//二维码
+        String bicycleNo = getBicycleNum(response,barcode,BAR_CODE);
+        JSONObject bikeInfo=CommonUtils.getBikeInfo(bicycleNo);
+        int bikeCode = Integer.valueOf(bikeInfo.get("code").toString());
+        if (bikeCode==1){
+            JSONObject lockInfo = CommonUtils.getCancellationLockInfo(bicycleNo);
+            int lockCode = Integer.valueOf(lockInfo.get("code").toString());
+            if (lockCode==0){
+                reponseResult(response, FactoryEnum.GET_CANCELLATION_LOCK_INFO_OK,lockInfo.get("data"),"flag",0);
+            }else {
+                reponseResult(response,FactoryEnum.GET_CANCELLATION_LOCK_INFO_FAIL,"");
+            }
+        }else {
+            reponseResult(response,FactoryEnum.GET_BIKE_INFO_FAIL,"","flag",1);
+        }
+    }
+
+
+
+
     //开助力车电池锁接口
     private  void   openBatteryLock(HttpServletRequest request,HttpServletResponse response){
 
@@ -699,13 +745,13 @@ public class FactoryServerController extends BaseController{
             Map<String, String> requestParam = getRequestParam(request);
             String barcode = requestParam.get("barcode");//二维码
             String bicycleNum = getBicycleNum(response,barcode,BAR_CODE);
-            BikeInfo bikeNum = bikeService.getBikeInfoByBicycleNum(bicycleNum);
-            if (bikeNum==null){
+            ElectricBikeInfo mopedInfo = bikeService.getMopedInfo(bicycleNum);
+            if (mopedInfo==null){
                 reponseResult(response, FactoryEnum.GET_BICK_SUPPLIER_NAME_UNFOUND);
                 return;
             }
 //            String openBatteryLock=getReqParam("openBatteryLock");
-            int repInfo = CommonUtils.SendOpenMopedBatteryLock(bikeNum.getSimNo());
+            int repInfo = CommonUtils.SendOpenMopedBatteryLock(mopedInfo.getSimNo());
             if (repInfo==Constant.Success) {
                 reponseResult(response, FactoryEnum.OPEN_LOCK_OK);
             }else{
@@ -722,16 +768,16 @@ public class FactoryServerController extends BaseController{
             Map<String, String> requestParam = getRequestParam(request);
             String barcode = requestParam.get("barcode");//二维码
             String bicycleNum = getBicycleNum(response,barcode,BAR_CODE);
-            BikeInfo bikeNum = bikeService.getBikeInfoByBicycleNum(bicycleNum);
+            ElectricBikeInfo mopedInfo = bikeService.getMopedInfo(bicycleNum);
             Map<String, Object> resultMap = null;
-            if (bikeNum==null){
+            if (mopedInfo==null){
                 resultMap=getReponseMap(FactoryEnum.GET_BICK_SUPPLIER_NAME_UNFOUND);
                 setResult(response,resultMap);
                 return;
             }
 //            String closeMotorLock=getReqParam("closeMotorLock");
 //            Integer flag = Integer.valueOf(getReqParam("flag"));
-            int repInfo=CommonUtils.SendControlMopedElectriclock(bikeNum.getSimNo(),CLOSE_MOPED_LOCK_FLAG);
+            int repInfo=CommonUtils.SendControlMopedElectriclock(mopedInfo.getSimNo(),CLOSE_MOPED_LOCK_FLAG);
             if (repInfo==Constant.Success) {
                 reponseResult(response, FactoryEnum.OPEN_LOCK_OK);
             }else{

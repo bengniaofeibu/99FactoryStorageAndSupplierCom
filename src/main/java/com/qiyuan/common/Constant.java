@@ -194,6 +194,8 @@ public class Constant {
 
 	public static  final  String CONTRO_LELECTRIC_LOCK="CONTROLELECTRICLOCK";
 
+	public static final String GET_CANCELLATION_LOCK_INFO="GETCANCELLATIONLOCKINFO";
+
 	public static final String TEST = "TEST";
 
 

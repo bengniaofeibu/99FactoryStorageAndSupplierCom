@@ -1,6 +1,9 @@
 package com.qiyuan.serviceImpl;
 
 import com.qiyuan.pojo.BikeUpdateInfo;
+import com.qiyuan.pojo.CancellationBikeInfo;
+import com.qiyuan.pojo.ElectricBikeInfo;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +25,7 @@ public class BikeServiceImpl extends BaseServiceImpl implements IBikeService{
 		StringBuffer shql = new StringBuffer();
 		shql.append("from BikeInfo where bicycleNo =:bicycleNo");
 		String[] params = { "bicycleNo" };
-		BikeInfo info = (BikeInfo) dataDao.getFirstObjectViaParam(shql.toString(), params, Integer.parseInt(bicycleNum));
+		BikeInfo info = (BikeInfo) dataDao.getFirstObjectViaParam(shql.toString(), params, Integer.parseInt(StringUtils.trim(bicycleNum)));
 		return info;
 	}
 	
@@ -31,7 +34,7 @@ public class BikeServiceImpl extends BaseServiceImpl implements IBikeService{
 		StringBuffer shql = new StringBuffer();
 		shql.append("from BikeInfo where bicycleNo =:bicycleNo or bluetoothMac =:bluetoothMac");
 		String[] params = { "bicycleNo","bluetoothMac" };
-		BikeInfo info = (BikeInfo) dataDao.getFirstObjectViaParam(shql.toString(), params, Integer.parseInt(bicycleNum),bluetoothMac);
+		BikeInfo info = (BikeInfo) dataDao.getFirstObjectViaParam(shql.toString(), params, Integer.parseInt(StringUtils.trim(bicycleNum)),bluetoothMac);
 		return info;
 	}
 
@@ -104,5 +107,24 @@ public class BikeServiceImpl extends BaseServiceImpl implements IBikeService{
 	@Override
 	public void recordBikeUpdateInfo(BikeUpdateInfo bikeUpdateInfo) {
         dataDao.addObject(bikeUpdateInfo);
+	}
+
+
+	@Override
+	public CancellationBikeInfo getCancellationBikeInfo(String bicycleNum) {
+		StringBuffer shql=new StringBuffer();
+		shql.append("from CancellationBikeInfo where bicycleNo=:bicycleNo");
+		String[] params = { "bicycleNo" };
+		CancellationBikeInfo info= (CancellationBikeInfo) dataDao.getFirstObjectViaParam(shql.toString(),params,Integer.parseInt(StringUtils.trim(bicycleNum)));
+		return info;
+	}
+
+	@Override
+	public ElectricBikeInfo getMopedInfo(String bicycleNum) {
+		StringBuffer shql = new StringBuffer();
+		shql.append("from BikeInfo where bicycleNo =:bicycleNo");
+		String[] params = { "bicycleNo" };
+		ElectricBikeInfo info = (ElectricBikeInfo) dataDao.getFirstObjectViaParam(shql.toString(), params, Integer.parseInt(StringUtils.trim(bicycleNum)));
+		return info;
 	}
 }
