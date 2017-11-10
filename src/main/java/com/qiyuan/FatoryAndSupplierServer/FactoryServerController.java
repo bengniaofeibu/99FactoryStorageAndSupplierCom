@@ -864,7 +864,7 @@ public class FactoryServerController extends BaseController{
 
     protected void getBarcodeBySimNo(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
         Map<String, Object> resultMap = new HashMap<String, Object>();
-        String simNo ="";
+        String simNo;
         try {
             Map<String, String> requestParam3DES = getRequestParam3DES(request);
             simNo = requestParam3DES.get("simNo");//设备编号
