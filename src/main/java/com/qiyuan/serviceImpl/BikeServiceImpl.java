@@ -122,7 +122,7 @@ public class BikeServiceImpl extends BaseServiceImpl implements IBikeService{
 	@Override
 	public ElectricBikeInfo getMopedInfo(String bicycleNum) {
 		StringBuffer shql = new StringBuffer();
-		shql.append("from BikeInfo where bicycleNo =:bicycleNo");
+		shql.append("from ElectricBikeInfo where bicycleNo =:bicycleNo");
 		String[] params = { "bicycleNo" };
 		ElectricBikeInfo info = (ElectricBikeInfo) dataDao.getFirstObjectViaParam(shql.toString(), params, Integer.parseInt(StringUtils.trim(bicycleNum)));
 		return info;

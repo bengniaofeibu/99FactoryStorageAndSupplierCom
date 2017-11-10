@@ -9,7 +9,6 @@ import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name="t_bike_info")
-//@Table(name = "t_electric_bike_info")
 public class BikeInfo extends BasePojo{
 
 	/**
@@ -24,7 +23,7 @@ public class BikeInfo extends BasePojo{
 	private String id;
 	
 	@Column(name = "bicycle_no", length = 10, nullable = false)
-	private int bicycleNo;
+	private Integer bicycleNo;
 	
 	@Column(name = "bicycle_status", length = 2, nullable = false)
 	private Integer bicycleStatus;
@@ -155,11 +154,11 @@ public class BikeInfo extends BasePojo{
 		this.id = id;
 	}
 
-	public int getBicycleNo() {
+	public Integer getBicycleNo() {
 		return bicycleNo;
 	}
 
-	public void setBicycleNo(int bicycleNo) {
+	public void setBicycleNo(Integer bicycleNo) {
 		this.bicycleNo = bicycleNo;
 	}
 
@@ -387,4 +386,13 @@ public class BikeInfo extends BasePojo{
 		this.lastConnectTime = lastConnectTime;
 	}
 
+    public BikeInfo() {
+    }
+
+    public BikeInfo(Integer bicycleNo, Date addTime, String simNo, String gprsNo) {
+        this.bicycleNo = bicycleNo;
+        this.addTime = addTime;
+        this.simNo = simNo;
+        this.gprsNo = gprsNo;
+    }
 }

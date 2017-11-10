@@ -6,6 +6,7 @@ import com.qiyuan.baiduUtil.BaiduYingYanUtilTest;
 import com.qiyuan.common.CommonUtils;
 import com.qiyuan.common.Constant;
 import com.qiyuan.common.PushtoSingle;
+import com.qiyuan.common.SecretUtils;
 import com.qiyuan.entity.Result;
 import com.qiyuan.enums.FactoryEnum;
 import com.qiyuan.pojo.*;
@@ -20,7 +21,11 @@ import javax.annotation.Resource;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URLDecoder;
 import java.util.Date;
 import java.util.HashMap;
@@ -36,6 +41,10 @@ public class FactoryServerController extends BaseController{
 
     private static final int CLOSE_MOPED_LOCK_FLAG=1;//关助力车电机锁
 
+    private static final int FLAG_0=0;//已经注销
+
+    private static final int FLAG_1=1;//没有注销
+
     private static final String BICYCLE_SIGN="5"; //单车开头标识
 
     private static final String MOPED_SIGN="6";//助力车开头标识
@@ -45,6 +54,8 @@ public class FactoryServerController extends BaseController{
     private static final  String BAR_CODE="http://www.99bicycle.com";
 
     private static final  String CMD_GPRS_OPEN_LOCK="gprsOpenLock";
+
+    private static  final  String CMD_CLOSE_MOTOR_LOCK="closeMotorLock";
 
 
     @Resource
@@ -91,9 +102,9 @@ public class FactoryServerController extends BaseController{
                 case Constant.GETBLUETOOTHINFOBYID:
                     getBluetoothInfoById(request, response);//赳赳开锁蓝牙开锁接口
                     break;
-                case Constant.FACTORYGPRSOPENLOCK:
+               /* case Constant.FACTORYGPRSOPENLOCK:
                     factoryGprsOpenLock(request, response);//入库GPRS开锁接口
-                    break;
+                    break;*/
                 case Constant.FACTORYGPRSOPENLOCKBYID:
                     factoryGprsOpenLockById(request, response);////开单车电机锁或助力车电机锁
                     break;
@@ -101,7 +112,7 @@ public class FactoryServerController extends BaseController{
                     factoryGprsOpenLockBySimNo(request, response);
                     break;
                 case Constant.ISSTORAGE:
-                    isStorage(request, response);//车辆是否入库aaa
+                    isStorage(request, response);//车辆是否入库
                     break;
                 case Constant.QUERYLOCKREALDATA:
                     queryLockRealData(request, response);//查询锁详情接口
@@ -128,7 +139,19 @@ public class FactoryServerController extends BaseController{
                     gprsCloseMotorLock(request, response);//GPRS开电机锁
                     break;
                 case Constant.GETSIMNOBYBARCODE:
-                    getSimNoByBarcode(request, response);
+                    getSimNoByBarcode(request, response); //获取simNo
+                    break;
+                case Constant.QUERYLOCKBYSIMNO:
+                    queryLockBysimNo(request,response);//入库前查询版本接口
+                    break;
+                case Constant.QUERYLOCK:
+                    queryLock(request,response);//查询锁版本接口
+                    break;
+                case Constant.SENDQUERYLOCKCMDBYSIMNO:
+                    sendQueryLockCmdBySimNo(request,response);//入库前下发查询锁版本命令接口
+                    break;
+                case Constant.SENDQUERYLOCKCMD:
+                    sendQueryLockCmd(request,response);//下发查询锁版本命令接口
                     break;
                 case Constant.GETBARCODEBYSIMNO:
                     getBarcodeBySimNo(request, response);
@@ -347,7 +370,7 @@ public class FactoryServerController extends BaseController{
         setResult(response, resultMap);
     }
 
-    protected void factoryGprsOpenLock(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
+    /*protected void factoryGprsOpenLock(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
         Map<String, Object> resultMap =new HashMap<String, Object>();
         String barcode ="";
         String cmd ="";
@@ -391,7 +414,7 @@ public class FactoryServerController extends BaseController{
             resultMap.put("message", "非法指令");
         }
         setResult(response, resultMap);
-    }
+    }*/
 
     //开单车电机锁或助力车电机锁 （6开头的是助力车 ，5开头是单车）
     protected void factoryGprsOpenLockById(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
@@ -410,28 +433,38 @@ public class FactoryServerController extends BaseController{
         }
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo = lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (lockFactoryEmployeeInfo != null) {
-            if (cmd.equals("gprsOpenLock")) {
-                String bicycleNum=getBicycleNum(response,barcode,BAR_CODE);
+            if (cmd.equals(CMD_GPRS_OPEN_LOCK)) {
+                String bicycleNum=getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
                 System.out.println("有效二维码");
                 System.out.println(bicycleNum);
-                BikeInfo bikeInfo = bikeService.getBikeInfoByBicycleNum(bicycleNum);
-                if (bikeInfo != null) {
+
+                BikeInfo bikeInfo;//单车实体
+                ElectricBikeInfo mopedInfo;//助力车实体
                     int res=0;
                     if (StringCommonUtil.startsWithStr(bicycleNum,MOPED_SIGN)){
-                        res = CommonUtils.SendControlMopedElectriclock(bikeInfo.getSimNo(),OPEN_MOPED_LOCK_FLAG);
+                        //助力车
+                         mopedInfo = bikeService.getMopedInfo(bicycleNum);
+                        if (mopedInfo==null){
+                            reponseResult(response,FactoryEnum.BICYCLE_NUM_NOT_BINDING);
+                        }
+                        res = CommonUtils.SendControlMopedElectriclock(mopedInfo.getSimNo(),OPEN_MOPED_LOCK_FLAG);
                     }else if (StringCommonUtil.startsWithStr(bicycleNum,BICYCLE_SIGN)){
+                        //单车
+                         bikeInfo = bikeService.getBikeInfoByBicycleNum(bicycleNum);
+                        if (bikeInfo==null){
+                            reponseResult(response,FactoryEnum.BICYCLE_NUM_NOT_BINDING);
+                        }
                         res = CommonUtils.SendOpenLockCmd(bikeInfo.getSimNo());
                     }else {
                         reponseResult(response, FactoryEnum.BICYCLE_NUM_ERROR);
                     }
+
                     if (res == Constant.Success) {
                         reponseResult(response, FactoryEnum.OPEN_LOCK_OK);
                     } else {
                         reponseResult(response, FactoryEnum.OPEN_LOCK_FAIL);
                     }
-                } else {
-                    reponseResult(response, FactoryEnum.BICYCLE_NUM_NOT_BINDING);
-                }
+
             } else {
                 reponseResult(response, FactoryEnum.CMD_ERROR);
             }
@@ -453,7 +486,7 @@ public class FactoryServerController extends BaseController{
         }
 
         if (simNo.length() == 12) {
-            if (cmd.equals("gprsOpenLock")) {
+            if (cmd.equals(CMD_GPRS_OPEN_LOCK)) {
                 BikeInfo bikeInfo = bikeService.getBikeInfoBySimNo(simNo);
                 if (bikeInfo == null) {
                     int res = CommonUtils.SendOpenLockCmd(simNo);
@@ -520,7 +553,7 @@ public class FactoryServerController extends BaseController{
         String barcode ="";
         String cmd ="";
         try {
-            Map<String, String> requestParam = getRequestParam(request);
+            Map<String, String> requestParam = getRequestParam3DES(request);
             barcode = requestParam.get("barcode");//二维码
             cmd = requestParam.get("cmd");// 命令
         } catch (Exception e) {
@@ -571,7 +604,6 @@ public class FactoryServerController extends BaseController{
     }
 
     protected void getBluetoothInfoById(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
-        Map<String, Object> resultMap =new HashMap<String, Object>();
         String barcode ="";
         String cmd ="";
         String id="";
@@ -586,69 +618,81 @@ public class FactoryServerController extends BaseController{
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo=lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (lockFactoryEmployeeInfo!=null){
             if(cmd.equals("getBleMessage")){
-                if(barcode.contains("http://www.99bicycle.com")){
+                if(barcode.contains(BAR_CODE)){
                     System.out.println("有效二维码");
-                    int index = barcode.indexOf("b=");
-                    System.out.println("index:" + index);
-                    String bicycleNum = barcode.substring(index + 2);
+                    String bicycleNum=getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
                     System.out.println(bicycleNum);
 
-                    BikeInfo info = bikeService.getBikeInfoByBicycleNum(bicycleNum);
-                    if(info != null){
-                        resultMap.put("mac", CommonUtils.PackingFactoryInfo(info.getBluetoothMac(), "mac"));
-                        resultMap.put("key", CommonUtils.PackingFactoryInfo(info.getNewKey(), "key"));
-                        resultMap.put("pass",CommonUtils.PackingFactoryInfo(info.getNewPassword(), "pass"));
-                        resultMap.put("flag",1);
-                    }else{
-                        CancellationBikeInfo cancellationBikeInfo = bikeService.getCancellationBikeInfo(bicycleNum);
-                        if (cancellationBikeInfo!=null){
-                            resultMap.put("mac", CommonUtils.PackingFactoryInfo(cancellationBikeInfo.getBluetoothMac(),"mac"));
-                            resultMap.put("key", CommonUtils.PackingFactoryInfo(cancellationBikeInfo.getNewKey(),"key"));
-                            resultMap.put("pass",CommonUtils.PackingFactoryInfo(cancellationBikeInfo.getNewPassword(),"pass"));
-                            resultMap.put("flag",0);
-                        } else {
-                            resultMap.put("mac", "");
-                            resultMap.put("key", "");
-                            resultMap.put("pass","");
+                    ElectricBikeInfo mopedInfo; //助力车实体
+                    BikeInfo info; //单车实体
+                    if (StringCommonUtil.startsWithStr(bicycleNum,MOPED_SIGN)){
+                        //助力车
+                         mopedInfo = bikeService.getMopedInfo(bicycleNum);
+                        if(mopedInfo != null){
+                            reponseBluetoothParam(response,mopedInfo,FLAG_1);
+                        }else{
+                            //已经注销
+                            CancellationBikeInfo cancellationBikeInfo = bikeService.getCancellationBikeInfo(bicycleNum);
+                            if (cancellationBikeInfo!=null){
+                                reponseBluetoothParam(response,cancellationBikeInfo,FLAG_0);
+                            } else {
+                                reponseBluetoothParam(response,null,null);
+                            }
                         }
+                    }else if (StringCommonUtil.startsWithStr(bicycleNum,BICYCLE_SIGN)){
+                        //单车
+                        info = bikeService.getBikeInfoByBicycleNum(bicycleNum);
+                        if(info != null){
+                            reponseBluetoothParam(response,info,FLAG_1);
+                        }else{
+                            CancellationBikeInfo cancellationBikeInfo = bikeService.getCancellationBikeInfo(bicycleNum);
+                            if (cancellationBikeInfo!=null){
+                                reponseBluetoothParam(response,cancellationBikeInfo,FLAG_0);
+                            } else {
+                                reponseBluetoothParam(response,null,null);
+                            }
+                        }
+                    }else {
+                        reponseResult(response, FactoryEnum.BICYCLE_NUM_ERROR);
                     }
                 }else{
-                    if(barcode.substring(0, 1).equals("5") && barcode.length() == 9){
-                        BikeInfo info = bikeService.getBikeInfoByBicycleNum(barcode);
-                        if(info != null){
-                            resultMap.put("mac", CommonUtils.PackingFactoryInfo(info.getBluetoothMac(), "mac"));
-                            resultMap.put("key", CommonUtils.PackingFactoryInfo(info.getNewKey(), "key"));
-                            resultMap.put("pass",CommonUtils.PackingFactoryInfo(info.getNewPassword(), "pass"));
-                            resultMap.put("flag",1);
+                    if(StringCommonUtil.startsWithStr(barcode,MOPED_SIGN) && barcode.length() == 9 ){
+                        //助力车
+                        ElectricBikeInfo mopedInfo = bikeService.getMopedInfo(barcode);
+                        if(mopedInfo != null){
+                            reponseBluetoothParam(response,mopedInfo,FLAG_1);
                         }else{
                             CancellationBikeInfo cancellationBikeInfo = bikeService.getCancellationBikeInfo(barcode);
                             if (cancellationBikeInfo!=null){
-                                resultMap.put("mac", CommonUtils.PackingFactoryInfo(cancellationBikeInfo.getBluetoothMac(),"mac"));
-                                resultMap.put("key", CommonUtils.PackingFactoryInfo(cancellationBikeInfo.getNewKey(),"key"));
-                                resultMap.put("pass",CommonUtils.PackingFactoryInfo(cancellationBikeInfo.getNewPassword(),"pass"));
-                                resultMap.put("flag",0);
+                                reponseBluetoothParam(response,cancellationBikeInfo,FLAG_0);
                             } else {
-                                resultMap.put("mac", "");
-                                resultMap.put("key", "");
-                                resultMap.put("pass","");
+                                reponseBluetoothParam(response,null,null);
                             }
                         }
-                    }else{
-                        resultMap.put("mac", "");
-                        resultMap.put("key", "");
-                        resultMap.put("pass","");
+                    }else if (StringCommonUtil.startsWithStr(barcode,BICYCLE_SIGN) && barcode.length() == 9){
+                        //单车
+                        BikeInfo info = bikeService.getBikeInfoByBicycleNum(barcode);
+                        if(info != null){
+                            reponseBluetoothParam(response,info,FLAG_1);
+                        }else{
+                            CancellationBikeInfo cancellationBikeInfo = bikeService.getCancellationBikeInfo(barcode);
+                            if (cancellationBikeInfo!=null){
+                                reponseBluetoothParam(response,cancellationBikeInfo,FLAG_0);
+                            } else {
+                                reponseBluetoothParam(response,null,null);
+                            }
+                        }
+                    } else{
+                        reponseBluetoothParam(response,null,null);
                     }
+
                 }
             }else{
-                resultMap.put("mac", "");
-                resultMap.put("key", "");
-                resultMap.put("pass","");
+                reponseBluetoothParam(response,null,null);
             }
         }else{
-            resultMap.put("result","fail");
-            resultMap.put("message", "用户不存在");
+           reponseResult(response,FactoryEnum.USER_NOT_FOUND_FAIL);
         }
-        setResult(response, resultMap);
     }
 
 
@@ -719,24 +763,21 @@ public class FactoryServerController extends BaseController{
     private void  getCancellationLockInfo(HttpServletRequest request,HttpServletResponse response){
         Map<String, String> requestParam = getRequestParam(request);
         String barcode = requestParam.get("barcode");//二维码
-        String bicycleNo = getBicycleNum(response,barcode,BAR_CODE);
+        String bicycleNo = getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
         JSONObject bikeInfo=CommonUtils.getBikeInfo(bicycleNo);
         int bikeCode = Integer.valueOf(bikeInfo.get("code").toString());
         if (bikeCode==1){
             JSONObject lockInfo = CommonUtils.getCancellationLockInfo(bicycleNo);
             int lockCode = Integer.valueOf(lockInfo.get("code").toString());
             if (lockCode==0){
-                reponseResult(response, FactoryEnum.GET_CANCELLATION_LOCK_INFO_OK,lockInfo.get("data"),"flag",0);
+                reponseResult(response, FactoryEnum.GET_CANCELLATION_LOCK_INFO_OK,lockInfo.get("data"),"flag",FLAG_0);
             }else {
                 reponseResult(response,FactoryEnum.GET_CANCELLATION_LOCK_INFO_FAIL,"");
             }
         }else {
-            reponseResult(response,FactoryEnum.GET_BIKE_INFO_FAIL,"","flag",1);
+            reponseResult(response,FactoryEnum.GET_BIKE_INFO_FAIL,"","flag",FLAG_1);
         }
     }
-
-
-
 
     //开助力车电池锁接口
     private  void   openBatteryLock(HttpServletRequest request,HttpServletResponse response){
@@ -744,10 +785,10 @@ public class FactoryServerController extends BaseController{
         try {
             Map<String, String> requestParam = getRequestParam(request);
             String barcode = requestParam.get("barcode");//二维码
-            String bicycleNum = getBicycleNum(response,barcode,BAR_CODE);
+            String bicycleNum = getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
             ElectricBikeInfo mopedInfo = bikeService.getMopedInfo(bicycleNum);
             if (mopedInfo==null){
-                reponseResult(response, FactoryEnum.GET_BICK_SUPPLIER_NAME_UNFOUND);
+                reponseResult(response, FactoryEnum.BICYCLE_NUM_NOT_BINDING);
                 return;
             }
 //            String openBatteryLock=getReqParam("openBatteryLock");
@@ -767,11 +808,11 @@ public class FactoryServerController extends BaseController{
         try {
             Map<String, String> requestParam = getRequestParam(request);
             String barcode = requestParam.get("barcode");//二维码
-            String bicycleNum = getBicycleNum(response,barcode,BAR_CODE);
+            String bicycleNum = getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
             ElectricBikeInfo mopedInfo = bikeService.getMopedInfo(bicycleNum);
             Map<String, Object> resultMap = null;
             if (mopedInfo==null){
-                resultMap=getReponseMap(FactoryEnum.GET_BICK_SUPPLIER_NAME_UNFOUND);
+                resultMap=getReponseMap(FactoryEnum.BICYCLE_NUM_NOT_BINDING);
                 setResult(response,resultMap);
                 return;
             }
@@ -825,11 +866,8 @@ public class FactoryServerController extends BaseController{
         Map<String, Object> resultMap = new HashMap<String, Object>();
         String simNo ="";
         try {
-            Map<String, String> requestParam = getRequestParam(request);
-            simNo = requestParam.get("simNo");//设备编号
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            Map<String, String> requestParam3DES = getRequestParam3DES(request);
+            simNo = requestParam3DES.get("simNo");//设备编号
 
         if (simNo.length()==12) {
             BikeInfo bikeInfo = bikeService.getBikeInfoBySimNo(simNo);
@@ -839,76 +877,189 @@ public class FactoryServerController extends BaseController{
                     LockTerminalInfo lockTerminalInfo = lockTerminalService.getInfoBySimNo(simNo);
                     if (lockTerminalInfo != null) {
                         StringBuffer barcode=new StringBuffer();
-                        barcode.append("http://www.99bicycle.com/download/?b="+bicycleNo);
-                        resultMap.put("result", "ok");
-                        resultMap.put("barcode", barcode);
-                        resultMap.put("message", "获取信息成功");
+                        barcode.append("http://www.99bicycle.com/download/?b=").append(bicycleNo);
+                        reponseResult(response,FactoryEnum.GET_SIM_NO_INFO_OK,barcode.toString());
                     } else {
-                        resultMap.put("result", "fail");
-                        resultMap.put("message", "无此设备信息");
+                        reponseResult(response,FactoryEnum.NOT_FOUND_SIM_NO_OK);
                     }
                 } else {
-                    resultMap.put("result", "fail");
-                    resultMap.put("message", "该车辆不存在");
+                    reponseResult(response,FactoryEnum.GET_BICK_SUPPLIER_NAME_UNFOUND);
                 }
             } else {
-                resultMap.put("result", "fail");
-                resultMap.put("message", "该车辆不存在");
+                reponseResult(response,FactoryEnum.GET_BICK_SUPPLIER_NAME_UNFOUND);
             }
         }else {
-            resultMap.put("result", "fail");
-            resultMap.put("message", "非法设备ID");
+            reponseResult(response,FactoryEnum.SIM_NO_ERROR);
+        }
+        } catch (Exception e) {
+            setResultWhenException(response,e.getMessage());
         }
         setResult(response, resultMap);
-
     }
+
+    private void sendQueryLockCmd(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
+		Map<String, Object> resultMap =new HashMap<>();
+		String barcode ="";
+		String cmd ="";
+		try {
+            Map<String, String> requestParam3DES = getRequestParam3DES(request);
+            barcode = requestParam3DES.get("barcode");//二维码
+			cmd = requestParam3DES.get("cmd");// 命令
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+			if(cmd.equals("queryLock")){
+					System.out.println("有效二维码");
+                    String bicycleNum =getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.CMD_ERROR);
+					System.out.println(bicycleNum);
+					BikeInfo bikeInfo = bikeService.getBikeInfoByBicycleNum(bicycleNum);
+					if(bikeInfo != null){
+						int res = CommonUtils.SendQueryLockCmd(bikeInfo.getSimNo());
+						if(res == Constant.Success){
+						    reponseResult(response,FactoryEnum.OPEN_LOCK_OK);
+						}else{
+						    reponseResult(response,FactoryEnum.OPEN_LOCK_FAIL);
+						}
+					}else{
+					    reponseResult(response,FactoryEnum.BICYCLE_NUM_NOT_BINDING);
+					}
+				}else{
+				    reponseResult(response,FactoryEnum.BARCODE_URL_ERROR);
+				}
+
+		setResult(response, resultMap);
+	}
+
+
+
+    private void sendQueryLockCmdBySimNo(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
+		Map<String, Object> resultMap = new HashMap<>();
+
+		String simNo ="";
+		String cmd ="";
+		try {
+            Map<String, String> requestParam3DES = getRequestParam3DES(request);
+            simNo = requestParam3DES.get("simNo");//二维码
+			cmd = requestParam3DES.get("cmd");// 命令
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		if (simNo.length() == 12) {
+			if (cmd.equals("queryLock")) {
+				BikeInfo bikeInfo = bikeService.getBikeInfoBySimNo(simNo);
+				if (bikeInfo == null) {
+					int res = CommonUtils.SendQueryLockCmd(simNo);
+					if (res == Constant.Success) {
+					    reponseResult(response,FactoryEnum.OPEN_LOCK_FAIL);
+					} else {
+					    reponseResult(response,FactoryEnum.OPEN_LOCK_FAIL);
+					}
+				} else {
+				    reponseResult(response,FactoryEnum.SIM_NO_ALREADY_BINDING);
+				}
+			} else {
+			    reponseResult(response,FactoryEnum.CMD_ERROR);
+			}
+		} else {
+		    reponseResult(response,FactoryEnum.SIM_NO_ERROR);
+		}
+
+		setResult(response, resultMap);
+
+	}
+
+
+    private void queryLock(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
+		Map<String, Object> resultMap =new HashMap<>();
+
+		String barcode ="";
+		try {
+            Map<String, String> requestParam3DES = getRequestParam3DES(request);
+            barcode = requestParam3DES.get("barcode");//二维码
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+				System.out.println("有效二维码");
+                String bicycleNum =getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
+				System.out.println(bicycleNum);
+
+				BikeInfo bikeInfo = bikeService.getBikeInfoByBicycleNum(bicycleNum);
+				if(bikeInfo != null){
+					LockTerminalInfo lockTerminalInfo = lockTerminalService.getInfoBySimNo(bikeInfo.getSimNo());
+					if(lockTerminalInfo != null){
+					    reponseResult(response,FactoryEnum.GET_SIM_NO_INFO_OK,bikeInfo.getVerSoftware());
+					}else{
+					    reponseResult(response,FactoryEnum.NOT_FOUND_SIM_NO_OK);
+					}
+				}else{
+				    reponseResult(response,FactoryEnum.BICYCLE_NUM_NOT_BINDING);
+				}
+		setResult(response, resultMap);
+	}
+
+    private void queryLockBysimNo(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
+		Map<String, Object> resultMap = new HashMap<>();
+		String simNo ="";
+		try {
+            Map<String,String> requestParam3DES=getRequestParam3DES(request);
+			simNo = requestParam3DES.get("simNo");//二维码
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+			if (simNo.length()==12){
+				BikeInfo bikeInfo = bikeService.getBikeInfoBySimNo(simNo);
+				if(bikeInfo == null){
+					LockTerminalInfo lockTerminalInfo = lockTerminalService.getInfoBySimNo(simNo);
+					if(lockTerminalInfo != null){
+					    reponseResult(response,FactoryEnum.GET_SIM_NO_INFO_OK,lockTerminalInfo.getVerSoftware());
+					}else{
+					    reponseResult(response,FactoryEnum.NOT_FOUND_SIM_NO_OK);
+					}
+				}else{
+				    reponseResult(response,FactoryEnum.SIM_NO_ALREADY_BINDING);
+				}
+			}else {
+		           reponseResult(response,FactoryEnum.SIM_NO_ERROR);
+			}
+
+		setResult(response, resultMap);
+
+	}
+
 
     protected void getSimNoByBarcode(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
         Map<String, Object> resultMap = new HashMap<String, Object>();
         String barcode ="";
         try {
-            Map<String, String> requestParam = getRequestParam(request);
-            barcode = requestParam.get("barcode");//二维码
+            Map<String, String> requestParam3DES = getRequestParam3DES(request);
+            barcode = requestParam3DES.get("barcode");//二维码
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        if(barcode.indexOf("http://www.99bicycle.com") != -1){
             System.out.println("有效二维码");
-            int index = barcode.indexOf("b=");
-            System.out.println("index:" + index);
-            String bicycleNum = barcode.substring(index + 2);
+            String bicycleNum =getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
             System.out.println(bicycleNum);
             if (bicycleNum.substring(0,2).equals("50")){
                 BikeInfo bikeInfo = bikeService.getBikeInfoByBicycleNum(bicycleNum);
                 if(bikeInfo != null){
                     LockTerminalInfo lockTerminalInfo = lockTerminalService.getInfoBySimNo(bikeInfo.getSimNo());
                     if(lockTerminalInfo != null){
-                        resultMap.put("result", "ok");
-                        resultMap.put("simNo", bikeInfo.getSimNo());
-                        resultMap.put("message", "获取信息成功");
+                        reponseResult(response,FactoryEnum.GET_SIM_NO_INFO_OK,bikeInfo.getSimNo());
                     }else{
-                        resultMap.put("result", "fail");
-                        resultMap.put("message", "无此设备信息");
+                        reponseResult(response,FactoryEnum.NOT_FOUND_SIM_NO_OK);
                     }
                 }else{
-                    resultMap.put("result", "fail");
-                    resultMap.put("message", "该车辆不存在");
+                    reponseResult(response,FactoryEnum.GET_BICK_SUPPLIER_NAME_UNFOUND);
                 }
             }else {
-                resultMap.put("result", "fail");
-                resultMap.put("message", "该车辆不存在");
+                reponseResult(response,FactoryEnum.GET_BICK_SUPPLIER_NAME_UNFOUND);
             }
 
-        }else{
-            resultMap.put("result", "fail");
-            resultMap.put("message", "非法二维码");
-        }
         setResult(response, resultMap);
     }
 
     protected void gprsCloseMotorLock(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
-        Map<String, Object> resultMap = new HashMap<String, Object>();
         String barcode ="";
         String cmd ="";
         String id="";
@@ -922,44 +1073,42 @@ public class FactoryServerController extends BaseController{
         }
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo = lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (lockFactoryEmployeeInfo != null) {
-            if (cmd.equals("closeMotorLock")) {
-                if (barcode.indexOf("http://www.99bicycle.com") != -1) {
+            if (cmd.equals(CMD_CLOSE_MOTOR_LOCK)) {
+                    String bicycleNum =getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
                     System.out.println("有效二维码");
-                    int index = barcode.indexOf("b=");
-                    System.out.println("index:" + index);
-                    String bicycleNum = barcode.substring(index + 2);
                     System.out.println(bicycleNum);
 
-                    BikeInfo bikeInfo = bikeService.getBikeInfoByBicycleNum(bicycleNum);
-                    if (bikeInfo != null) {
-                        int res = CommonUtils.SendCloseMotorLockCmd(bikeInfo.getSimNo());
-                        if (res == Constant.Success) {
-                            resultMap.put("result", "ok");
-                            resultMap.put("message", "指令发送成功");
-                        } else {
-                            resultMap.put("result", "fail");
-                            resultMap.put("message", "指令发送失败");
+                    BikeInfo bikeInfo; //单车实体
+                    ElectricBikeInfo mopedInfo; //助力车实体
+                    int res=0;
+                    if (StringCommonUtil.startsWithStr(bicycleNum,MOPED_SIGN)){
+                        mopedInfo = bikeService.getMopedInfo(bicycleNum);
+                        if (mopedInfo==null){
+                            reponseResult(response,FactoryEnum.BICYCLE_NUM_NOT_BINDING);
                         }
-                    } else {
-                        resultMap.put("result", "fail");
-                        resultMap.put("message", "此设备没绑定");
+                        res = CommonUtils.SendControlMopedElectriclock(mopedInfo.getSimNo(),OPEN_MOPED_LOCK_FLAG);
+                    }else if (StringCommonUtil.startsWithStr(bicycleNum,BICYCLE_SIGN)){
+                        bikeInfo = bikeService.getBikeInfoByBicycleNum(bicycleNum);
+                        if (bikeInfo==null){
+                            reponseResult(response,FactoryEnum.BICYCLE_NUM_NOT_BINDING);
+                        }
+                        res = CommonUtils.SendOpenLockCmd(bikeInfo.getSimNo());
+                    }else {
+                        reponseResult(response, FactoryEnum.BICYCLE_NUM_ERROR);
                     }
-
-                } else {
-                    resultMap.put("result", "fail");
-                    resultMap.put("message", "非法二维码");
-                }
+                    if (res == Constant.Success) {
+                        reponseResult(response, FactoryEnum.OPEN_LOCK_OK);
+                    } else {
+                        reponseResult(response, FactoryEnum.OPEN_LOCK_FAIL);
+                    }
             } else {
-                resultMap.put("result", "fail");
-                resultMap.put("message", "非法指令");
+                reponseResult(response,FactoryEnum.CMD_ERROR);
             }
 
         }
-        setResult(response, resultMap);
     }
 
     protected void gprsOpenBatteryLock(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
-        Map<String, Object> resultMap = new HashMap<String, Object>();
         String barcode ="";
         String cmd ="";
         String id="";
@@ -974,39 +1123,37 @@ public class FactoryServerController extends BaseController{
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo = lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (lockFactoryEmployeeInfo != null) {
             if (cmd.equals("openBatteryLock")) {
-                if (barcode.indexOf("http://www.99bicycle.com") != -1) {
                     System.out.println("有效二维码");
-                    int index = barcode.indexOf("b=");
-                    System.out.println("index:" + index);
-                    String bicycleNum = barcode.substring(index + 2);
+                    String bicycleNum=getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
                     System.out.println(bicycleNum);
 
-                    BikeInfo bikeInfo = bikeService.getBikeInfoByBicycleNum(bicycleNum);
-                    if (bikeInfo != null) {
-                        int res = CommonUtils.SendOpenBatteryLockCmd(bikeInfo.getSimNo());
-                        if (res == Constant.Success) {
-                            resultMap.put("result", "ok");
-                            resultMap.put("message", "指令发送成功");
-                        } else {
-                            resultMap.put("result", "fail");
-                            resultMap.put("message", "指令发送失败");
+                    BikeInfo bikeInfo; //单车实体
+                    ElectricBikeInfo mopedInfo; //助力车实体
+                    int res=0;
+                    if (StringCommonUtil.startsWithStr(bicycleNum,MOPED_SIGN)){
+                        mopedInfo = bikeService.getMopedInfo(bicycleNum);
+                        if (mopedInfo==null){
+                             reponseResult(response,FactoryEnum.BICYCLE_NUM_NOT_BINDING);
                         }
-                    } else {
-                        resultMap.put("result", "fail");
-                        resultMap.put("message", "此设备没绑定");
+                        res = CommonUtils.SendControlMopedElectriclock(mopedInfo.getSimNo(),OPEN_MOPED_LOCK_FLAG);
+                    }else if (StringCommonUtil.startsWithStr(bicycleNum,BICYCLE_SIGN)){
+                        bikeInfo = bikeService.getBikeInfoByBicycleNum(bicycleNum);
+                        if (bikeInfo==null){
+                            reponseResult(response,FactoryEnum.BICYCLE_NUM_NOT_BINDING);
+                        }
+                        res = CommonUtils.SendOpenLockCmd(bikeInfo.getSimNo());
+                    }else {
+                        reponseResult(response, FactoryEnum.BICYCLE_NUM_ERROR);
                     }
-
-                } else {
-                    resultMap.put("result", "fail");
-                    resultMap.put("message", "非法二维码");
-                }
+                    if (res == Constant.Success) {
+                        reponseResult(response, FactoryEnum.OPEN_LOCK_OK);
+                    } else {
+                        reponseResult(response, FactoryEnum.OPEN_LOCK_FAIL);
+                    }
             } else {
-                resultMap.put("result", "fail");
-                resultMap.put("message", "非法指令");
+                reponseResult(response,FactoryEnum.CMD_ERROR);
             }
-
         }
-        setResult(response, resultMap);
     }
 
     private void changePsw(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
@@ -1155,7 +1302,7 @@ public class FactoryServerController extends BaseController{
 
         String newPass = StringCommonUtil.getRegexStr(psw,",");
 
-        String bicycleNum = getBicycleNum(response,barcode,BAR_CODE);
+        String bicycleNum = getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
 
         //判断是simno是否存在，如果存在提示
         BikeInfo bikeInfos = bikeService.getBikeInfoBySimNo(simNo);
@@ -1312,4 +1459,40 @@ public class FactoryServerController extends BaseController{
         setResult(response, resultMap);
     }
 
+    //返回蓝牙开锁所需要参数
+    private void reponseBluetoothParam(HttpServletResponse response,Object object,Integer flag){
+        Map<String,Object> resultMap=new HashMap<>();
+
+          if(object==null || flag==null){
+              resultMap.put("mac", "");
+              resultMap.put("key", "");
+              resultMap.put("pass","");
+              setResult(response,resultMap);
+              return;
+          }
+        Class aClass=object.getClass();
+        Method method;
+        try {
+            method = aClass.getMethod("getNewKey");
+            String newKey =(String) method.invoke(object);
+
+            method = aClass.getMethod("getBluetoothMac");
+            String bluetoothMac =(String) method.invoke(object);
+
+            method = aClass.getMethod("getNewPassword");
+            String newPassword =(String) method.invoke(object);
+
+            resultMap.put("mac", CommonUtils.PackingFactoryInfo(bluetoothMac, "mac"));
+            resultMap.put("key", CommonUtils.PackingFactoryInfo(newKey, "key"));
+            resultMap.put("pass",CommonUtils.PackingFactoryInfo(newPassword, "pass"));
+            resultMap.put("flag",flag);
+            setResult(response,resultMap);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+    }
 }

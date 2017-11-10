@@ -27,5 +27,4 @@ public class SupplierComProController extends SupplierServerController {
             LOGGER.error("ERROR: " + e.getMessage());
         }
     }
-
 }

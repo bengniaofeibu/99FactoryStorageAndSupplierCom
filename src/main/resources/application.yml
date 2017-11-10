@@ -5,7 +5,8 @@ server:
 #spring配置
 spring:
     profiles:
-      active: dev
+      active: prod
+#      active: dev
     http:
       encoding:
         charset: utf-8

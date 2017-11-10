@@ -59,12 +59,12 @@ public class BaseController extends HttpServlet {
      * @param barcodeURL
      * @return
      */
-    protected  String getBicycleNum(HttpServletResponse response,String barcodeURL,String barCode){
+    protected  String getBicycleNum(HttpServletResponse response,String barcodeURL,String barCode,EnumService enumService){
         if (judgeBarcodeURL(barcodeURL,barCode)){
             int index = barcodeURL.indexOf("b=");
             return  barcodeURL.substring(index + 2);
         }else {
-            Map<String, Object> reponseMap = getReponseMap(FactoryEnum.BARCODE_URL_ERROR);
+            Map<String, Object> reponseMap = getReponseMap(enumService);
             setResult(response,reponseMap);
         }
         return  "";
@@ -81,7 +81,7 @@ public class BaseController extends HttpServlet {
         try {
             PrintWriter out = response.getWriter();
             // json格式转换
-            Gson gson = new GsonBuilder()/*.setDateFormat("yyyy-MM-dd HH:mm:ss").disableHtmlEscaping()*/.create();
+            Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").disableHtmlEscaping().create();
             String json = gson.toJson(resultMap);
             out.print(json);
             System.out.println(json);
@@ -239,6 +239,7 @@ public class BaseController extends HttpServlet {
             }
             ObjectMapper json = new ObjectMapper();
             Map<String, String> requestMap = json.readValue(TripleDES.decode(reportBuilder.toString()), Map.class);
+//            Map<String, String> requestMap = json.readValue(reportBuilder.toString(), Map.class);
             //验证参数是否为空
             validateEmpty(requestMap);
             return  requestMap;
@@ -249,6 +250,33 @@ public class BaseController extends HttpServlet {
           }
         return null;
       }
+
+    /**
+     * 获取请求参数并解密(3DES)
+     * @param request
+     * @return
+     */
+    protected   Map<String,String> getRequestParam3DES(HttpServletRequest request) {
+        try {
+            BufferedReader reader = request.getReader();
+            StringBuilder reportBuilder = new StringBuilder();
+            String tempStr = "";
+            while ((tempStr = reader.readLine()) != null) {
+                reportBuilder.append(tempStr);
+            }
+            ObjectMapper json = new ObjectMapper();
+            Map<String, String> requestMap = json.readValue(SecretUtils.Decrypt3DES(reportBuilder.toString()), Map.class);
+            //验证参数是否为空
+            validateEmpty(requestMap);
+            return  requestMap;
+        } catch (IOException e) {
+            LOGGER.error(e.getMessage());
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
+        }
+        return null;
+    }
+
 
     /**
      * 验证
@@ -306,9 +334,7 @@ public class BaseController extends HttpServlet {
         map.put("result",enumService.getCode());
         map.put("message",enumService.getMessage());
         map.put("data",obj);
-        if (key!=null && value!=null){
-             map.put(key,value);
-        }
+        map.put(key,value);
         return  map;
     }
 

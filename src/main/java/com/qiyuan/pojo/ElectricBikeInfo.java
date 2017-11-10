@@ -8,7 +8,9 @@ import java.util.Date;
 
 @Entity
 @Table(name="t_electric_bike_info")
-public class ElectricBikeInfo implements Serializable {
+public class ElectricBikeInfo extends BasePojo {
+
+
     @Id
     @GenericGenerator(name="uuid",strategy="uuid")
     @GeneratedValue(generator="uuid")
