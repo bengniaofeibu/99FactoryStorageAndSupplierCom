@@ -8,7 +8,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.qiyuan.common.*;
 import com.qiyuan.enums.EnumService;
-import com.qiyuan.enums.FactoryEnum;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
@@ -81,7 +80,7 @@ public class BaseController extends HttpServlet {
         try {
             PrintWriter out = response.getWriter();
             // json格式转换
-            Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").disableHtmlEscaping().create();
+            Gson gson = new GsonBuilder()/*.setDateFormat("yyyy-MM-dd HH:mm:ss")*/.disableHtmlEscaping().create();
             String json = gson.toJson(resultMap);
             out.print(json);
             System.out.println(json);
@@ -307,7 +306,6 @@ public class BaseController extends HttpServlet {
         Map<String, Object> reponseMap = getReponseMap(enumService,obj,key,value);
         setResult(response,reponseMap);
     }
-
 
     /**
      * 返回参数Map

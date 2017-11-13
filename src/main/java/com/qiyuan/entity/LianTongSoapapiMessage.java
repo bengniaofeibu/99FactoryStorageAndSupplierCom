@@ -1,6 +1,7 @@
 package com.qiyuan.entity;
 
 import com.qiyuan.Base.BaseRepMessge;
+import com.qiyuan.terminalService.GetSMSDetailsService;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -10,99 +11,34 @@ import org.springframework.stereotype.Component;
  * Date: 2017/10/20
  * Time: 9:59
  */
-@Component
-@ConfigurationProperties(prefix = "LianTongSoapapiMessage")
 public class LianTongSoapapiMessage {
-   private String userName;
-   private String passWord;
-   private String headPath;
-   private String requestLicenseKey;
-   private String reqUrl;
-   private String namespaceUri;
-   private String prefix;
-   private GetTerminalDetailReqMessage getTerminalDetailReqMessage;
 
 
-    public String getUserName() {
-        return userName;
+    public static final String USER_NAME="panjuanjuan";
+
+    public static final String PASS_WORD="shjj123456";
+
+    public static final String REQUEST_LICENSE_KEY="23079646-c276-47e1-bf50-3200a7ce842e";
+
+    public static final String NAME_SPACE_URI="http://api.jasperwireless.com/ws/schema";
+
+    public static final String PREFIX="jws";
+
+    public static final String REQUEST_MESSAGE_ID="TCE-100-ABC-34084";
+
+    public static final String REQUEST_VERSION="1.0";
+
+    public BaseRepMessge baseRepMessge;
+
+    public BaseRepMessge getBaseRepMessge() {
+        return baseRepMessge;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
+    public void setBaseRepMessge(BaseRepMessge baseRepMessge) {
+        this.baseRepMessge = baseRepMessge;
     }
 
-    public String getPassWord() {
-        return passWord;
-    }
-
-    public void setPassWord(String assWord) {
-        this.passWord = assWord;
-    }
-
-    public String getHeadPath() {
-        return headPath;
-    }
-
-    public void setHeadPath(String headPath) {
-        this.headPath = headPath;
-    }
-
-    public String getRequestLicenseKey() {
-        return requestLicenseKey;
-    }
-
-    public void setRequestLicenseKey(String requestLicenseKey) {
-        this.requestLicenseKey = requestLicenseKey;
-    }
-
-    public String getReqUrl() {
-        return reqUrl;
-    }
-
-    public void setReqUrl(String reqUrl) {
-        this.reqUrl = reqUrl;
-    }
-
-    public String getNamespaceUri() {
-        return namespaceUri;
-    }
-
-    public void setNamespaceUri(String namespaceUri) {
-        this.namespaceUri = namespaceUri;
-    }
-
-    public String getPrefix() {
-        return prefix;
-    }
-
-    public void setPrefix(String prefix) {
-        this.prefix = prefix;
-    }
-
-
-    public GetTerminalDetailReqMessage getGetTerminalDetailReqMessage() {
-        return getTerminalDetailReqMessage;
-    }
-
-    public void setGetTerminalDetailReqMessage(GetTerminalDetailReqMessage getTerminalDetailReqMessage) {
-        this.getTerminalDetailReqMessage = getTerminalDetailReqMessage;
-    }
-
-    @Override
-    public String toString() {
-        return "LianTongSoapapiMessage{" +
-                "userName='" + userName + '\'' +
-                ", passWord='" + passWord + '\'' +
-                ", headPath='" + headPath + '\'' +
-                ", requestLicenseKey='" + requestLicenseKey + '\'' +
-                ", reqUrl='" + reqUrl + '\'' +
-                ", namespaceUri='" + namespaceUri + '\'' +
-                ", prefix='" + prefix + '\'' +
-                ", getTerminalDetailReqMessage=" + getTerminalDetailReqMessage +
-                '}';
-    }
-
-    public StringBuilder getHeadPathValue(){
-         return  new StringBuilder(getHeadPath());
+    public LianTongSoapapiMessage(BaseRepMessge baseRepMessge) {
+        this.baseRepMessge = baseRepMessge;
     }
 }

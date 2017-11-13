@@ -1,29 +1,29 @@
 package com.qiyuan.FatoryAndSupplierServer;
 
 import com.daoshun.exception.NullParameterException;
+import com.google.gson.Gson;
 import com.qiyuan.Base.BaseController;
 import com.qiyuan.baiduUtil.BaiduYingYanUtilTest;
 import com.qiyuan.common.CommonUtils;
 import com.qiyuan.common.Constant;
 import com.qiyuan.common.PushtoSingle;
-import com.qiyuan.common.SecretUtils;
+import com.qiyuan.entity.CancelBikeInfo;
 import com.qiyuan.entity.Result;
 import com.qiyuan.enums.FactoryEnum;
 import com.qiyuan.pojo.*;
 import com.qiyuan.service.*;
 import com.qiyuan.terminalService.ApiClientConstantService;
+import com.qiyuan.terminalService.GetSMSDetailsService;
+import com.qiyuan.terminalService.SendSMSService;
 import com.qiyuan.utils.StringCommonUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
-
 import javax.annotation.Resource;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URLDecoder;
@@ -82,6 +82,14 @@ public class FactoryServerController extends BaseController{
      */
     @Resource(name = "apiClientConstantService")
     private ApiClientConstantService apiClientConstantService;
+
+    @Resource(name="sendSMSService")
+    private SendSMSService sendSMSService;
+
+    @Resource(name="getSMSDetailsService")
+    private GetSMSDetailsService getSMSDetailsService;
+
+
 
     //接口入口
     protected void factorCallingService(HttpServletRequest request, HttpServletResponse response)
@@ -157,7 +165,13 @@ public class FactoryServerController extends BaseController{
                     getBarcodeBySimNo(request, response);
                     break;
                 case Constant.GET_LIANTONG_LOCK_STATUS:
-                    getBicycleLockStatus(response);
+                    getBicycleLockStatus(response);//获取车辆锁的状态(联通)
+                    break;
+                case  Constant.SEND_SMS_LOCK:
+                    sendSmSLock(response); //发送短信到设备上(联通)
+                    break;
+                case  Constant.GET_SMS_DETAILS:
+                    getSMSDetails(response); //获取短信是否送达到设备上的状态(联通)
                     break;
                 case Constant.GETBIKEINFO:
                     getBikeInfo(request,response);
@@ -181,6 +195,21 @@ public class FactoryServerController extends BaseController{
         }
     }
 
+    //获取短信是否送达到设备上的状态(联通)
+    private void getSMSDetails(HttpServletResponse response) {
+        try {
+            String smsId=getReqParam("smsId");
+            Result result = getSMSDetailsService.getSMSDetails(smsId);
+            if (result.getCode()== 200){
+                reponseResult(response,FactoryEnum.GET_SMS_DETAILS_OK,result.getData());
+            }else{
+                reponseResult(response,FactoryEnum.GET_SMS_DETAILS_FAIL);
+            }
+        } catch (Exception e) {
+            setResultWhenException(response,e.getMessage());
+        }
+
+    }
 
     //获取车辆锁的状态(联通)
     private  void getBicycleLockStatus(HttpServletResponse response){
@@ -191,6 +220,24 @@ public class FactoryServerController extends BaseController{
                 reponseResult(response,FactoryEnum.GET_BICYLE_LOCK_OK,result.getData());
             }else{
                 reponseResult(response,FactoryEnum.GET_BICYLE_LOCK_FAIL);
+            }
+        } catch (Exception e) {
+            setResultWhenException(response,e.getMessage());
+        }
+
+    }
+
+    //发送短信到设备上(联通)
+    private  void sendSmSLock(HttpServletResponse response){
+        try {
+            String iccid=getReqParam("iccid");
+            String message=getReqParam("message");
+            byte tpvp=Byte.valueOf(getReqParam("tpvp"));
+            Result result = sendSMSService.sendSMSService(iccid,message,tpvp);
+            if (result.getCode()== 200){
+                reponseResult(response,FactoryEnum.SMS_SEND_OK,result.getData());
+            }else{
+                reponseResult(response,FactoryEnum.SMS_SEND_FAIL);
             }
         } catch (Exception e) {
             setResultWhenException(response,e.getMessage());
@@ -761,21 +808,27 @@ public class FactoryServerController extends BaseController{
 
     //获取注销锁的信息
     private void  getCancellationLockInfo(HttpServletRequest request,HttpServletResponse response){
-        Map<String, String> requestParam = getRequestParam(request);
-        String barcode = requestParam.get("barcode");//二维码
-        String bicycleNo = getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
-        JSONObject bikeInfo=CommonUtils.getBikeInfo(bicycleNo);
-        int bikeCode = Integer.valueOf(bikeInfo.get("code").toString());
-        if (bikeCode==1){
-            JSONObject lockInfo = CommonUtils.getCancellationLockInfo(bicycleNo);
-            int lockCode = Integer.valueOf(lockInfo.get("code").toString());
-            if (lockCode==0){
-                reponseResult(response, FactoryEnum.GET_CANCELLATION_LOCK_INFO_OK,lockInfo.get("data"),"flag",FLAG_0);
+        try {
+            Map<String, String> requestParam = getRequestParam(request);
+            String barcode = requestParam.get("barcode");//二维码
+            String bicycleNo = getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
+            JSONObject bikeInfo=CommonUtils.getBikeInfo(bicycleNo);
+            int bikeCode = Integer.valueOf(bikeInfo.get("code").toString());
+            if (bikeCode==1){
+                JSONObject lockInfo = CommonUtils.getCancellationLockInfo(bicycleNo);
+                int lockCode = Integer.valueOf(lockInfo.get("code").toString());
+                if (lockCode==0){
+                    Gson gson=new Gson();
+                    CancelBikeInfo map=gson.fromJson(lockInfo.get("data").toString(), CancelBikeInfo.class);
+                    reponseResult(response, FactoryEnum.GET_CANCELLATION_LOCK_INFO_OK,map,"flag",FLAG_0);
+                }else {
+                    reponseResult(response,FactoryEnum.GET_CANCELLATION_LOCK_INFO_FAIL,"");
+                }
             }else {
-                reponseResult(response,FactoryEnum.GET_CANCELLATION_LOCK_INFO_FAIL,"");
+                reponseResult(response,FactoryEnum.GET_BIKE_INFO_FAIL,"","flag",FLAG_1);
             }
-        }else {
-            reponseResult(response,FactoryEnum.GET_BIKE_INFO_FAIL,"","flag",FLAG_1);
+        }catch (Exception e){
+           setResultWhenException(response,e.getMessage());
         }
     }
 
@@ -1351,7 +1404,7 @@ public class FactoryServerController extends BaseController{
                     bikeUpdateInfo.setSimNo(simNo);
                     bikeUpdateInfo.setCreateTime(new Date());
                     bikeUpdateInfo.setUpdateTime(new Date());
-                    bikeService.recordBikeUpdateInfo(bikeUpdateInfo);
+//                    bikeService.recordBikeUpdateInfo(bikeUpdateInfo);
 
 
 
@@ -1414,6 +1467,20 @@ public class FactoryServerController extends BaseController{
                             newBikeInfo.setUpdateFlag(0);
                             newBikeInfo.setNewKey(newKey);
                             newBikeInfo.setNewPassword(newPass);
+                            newBikeInfo.setBicycleLockStatus(0);
+                            newBikeInfo.setBicycleStatus(0);
+                            newBikeInfo.setActivityStatus(0);
+                            newBikeInfo.setBatteryStatus(0);
+                            newBikeInfo.setBindingStatus(0);
+                            newBikeInfo.setBreakStatus(0);
+                            newBikeInfo.setChargeStatus(0);
+                            newBikeInfo.setCorpse_status(0);
+                            newBikeInfo.setFence_status(0);
+                            newBikeInfo.setOnlineStatus(0);
+                            newBikeInfo.setRecallStatus(0);
+                            newBikeInfo.setRideStatus(0);
+                            newBikeInfo.setShutdownStatus(0);
+                            newBikeInfo.setSuspectBreakStatus(0);
                             bikeService.addBikeInfo(newBikeInfo);
 
                             LockTerminalInfo lockTerminalInfo = lockTerminalService.getInfoByMac(bluetoothMac);

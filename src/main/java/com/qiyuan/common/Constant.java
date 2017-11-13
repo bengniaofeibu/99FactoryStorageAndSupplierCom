@@ -249,6 +249,9 @@ public class Constant {
 
      public static final String GET_LIANTONG_LOCK_STATUS="GETLIANTONGLOCKSTATUS";
 
+	 public static final String SEND_SMS_LOCK="SENDSMSLOCK";
+
+	 public  static  final  String GET_SMS_DETAILS="GETSMSDETAILS";
 
 	/****************** 验证码短信配置 ********************/
 	/**

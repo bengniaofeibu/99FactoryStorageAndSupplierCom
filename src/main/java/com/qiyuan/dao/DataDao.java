@@ -1,13 +1,10 @@
 package com.qiyuan.dao;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-import com.qiyuan.pojo.BasePojo;
 import org.hibernate.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;

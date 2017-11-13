@@ -11,9 +11,9 @@ public class BaiduYingYanUtil {
 
 	private  static  final String CONTROL_LECTRIC_LOCK_URL ="http://99company.99bicycle.com:8081/lock?action=CONTROLELECTRICLOCK";
 
-	private  static  final  String GET_CANCELLATION_LOCK_INFO_URL="http://10.0.180.67/LockApi/lock?action=GETCANCELLATIONBIKEINFO";
+	private  static  final  String GET_CANCELLATION_LOCK_INFO_URL="http://172.16.20.133:8085/lock?action=GETCANCELLATIONBIKEINFO";
 
-	private  static  final  String GET_BIKE_INFO_URL="http://10.0.180.67/LockApi/lock?action=GETBIKEINFO";
+	private  static  final  String GET_BIKE_INFO_URL="http://172.16.20.133:8085/lock?action=GETBIKEINFO";
 
 	public static String getRecEncoding() {
 		return recEncoding;

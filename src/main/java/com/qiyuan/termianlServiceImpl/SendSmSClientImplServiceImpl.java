@@ -1,20 +1,11 @@
-/**
- * Copyright 2005 Jasper Systems, Inc. All rights reserved.
- *
- * This software code is the confidential and proprietary information of
- * Jasper Systems, Inc. ("Confidential Information"). Any unauthorized
- * review, use, copy, disclosure or distribution of such Confidential
- * Information is strictly prohibited.
- */
 package com.qiyuan.termianlServiceImpl;
 
-
 import com.qiyuan.Base.BaseRepMessge;
-import com.qiyuan.entity.GetSMSDetailsReqMessage;
-import com.qiyuan.entity.Result;
-import com.qiyuan.terminalService.ApiClientConstantService;
 import com.qiyuan.entity.GetTerminalDetailReqMessage;
 import com.qiyuan.entity.LianTongSoapapiMessage;
+import com.qiyuan.entity.Result;
+import com.qiyuan.entity.SendSmSReqMessage;
+import com.qiyuan.terminalService.SendSMSService;
 import com.qiyuan.utils.ResultUtil;
 import com.sun.xml.wss.ProcessingContext;
 import com.sun.xml.wss.XWSSProcessor;
@@ -25,7 +16,6 @@ import com.sun.xml.wss.impl.callback.UsernameCallback;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -33,25 +23,16 @@ import org.w3c.dom.NodeList;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.servlet.http.HttpServletRequest;
 import javax.xml.soap.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-/**
- * Created by IntelliJ IDEA.
- * User: tonghengzhen
- * Date: 2017/10/20
- * Time: 10:07
- */
+@Service("sendSMSService")
+public class SendSmSClientImplServiceImpl extends BaseRepMessge implements SendSMSService {
 
-@Service("apiClientConstantService")
-public class GetTerminalDetailsClientImplServiceImpl extends BaseRepMessge implements ApiClientConstantService{
-
-    private  static Log LOGGER= LogFactory.getLog(GetTerminalDetailsClientImplServiceImpl.class);
-
+    private  static Log LOGGER= LogFactory.getLog(SendSmSClientImplServiceImpl.class);
 
 
     /**
@@ -61,12 +42,12 @@ public class GetTerminalDetailsClientImplServiceImpl extends BaseRepMessge imple
      * @throws MalformedURLException
      * @throws XWSSecurityException
      */
-    public GetTerminalDetailsClientImplServiceImpl()
+    public SendSmSClientImplServiceImpl()
             throws SOAPException, MalformedURLException, XWSSecurityException {
         connectionFactory = SOAPConnectionFactory.newInstance();
         messageFactory = MessageFactory.newInstance();
         processorFactory = XWSSProcessorFactory.newInstance();
-        lianTongSoapapiMessage=new LianTongSoapapiMessage(new GetTerminalDetailReqMessage());
+        lianTongSoapapiMessage=new LianTongSoapapiMessage(new SendSmSReqMessage());
     }
 
     /**
@@ -76,11 +57,11 @@ public class GetTerminalDetailsClientImplServiceImpl extends BaseRepMessge imple
      * @return SOAPMessage
      * @throws SOAPException
      */
-    private SOAPMessage createTerminalRequest(String iccid) throws SOAPException {
+    private SOAPMessage createTerminalRequest(String sentToIccId,String messageText,byte tpvp) throws SOAPException {
         SOAPMessage message = messageFactory.createMessage();
         message.getMimeHeaders().addHeader("SOAPAction",lianTongSoapapiMessage.getBaseRepMessge().getHeadPath());
         SOAPEnvelope envelope = message.getSOAPPart().getEnvelope();
-        Name terminalRequestName =createName(envelope,"GetTerminalDetailsRequest");
+        Name terminalRequestName = createName(envelope,"SendSMSRequest");
         SOAPBodyElement terminalRequestElement = message.getSOAPBody()
                 .addBodyElement(terminalRequestName);
         Name msgId = createName(envelope,"messageId");
@@ -92,17 +73,21 @@ public class GetTerminalDetailsClientImplServiceImpl extends BaseRepMessge imple
         Name license = createName(envelope,"licenseKey");
         SOAPElement licenseElement = terminalRequestElement.addChildElement(license);
         licenseElement.setValue(LianTongSoapapiMessage.REQUEST_LICENSE_KEY);
-        Name iccids = createName(envelope,"iccids");
-        SOAPElement iccidsElement = terminalRequestElement.addChildElement(iccids);
-        Name iccidName = createName(envelope,"iccid");
-        SOAPElement iccidElement = iccidsElement.addChildElement(iccidName);
-        iccidElement.setValue(iccid);
+        Name sentToIccIdName = createName(envelope,"sentToIccid");
+        SOAPElement sentToIccIdElement = terminalRequestElement.addChildElement(sentToIccIdName);
+        sentToIccIdElement.setValue(sentToIccId);
+        Name messageTextName = createName(envelope,"messageText");
+        SOAPElement messageTextElement= terminalRequestElement.addChildElement(messageTextName);
+        messageTextElement.setValue(messageText);
+        Name tpvpName = createName(envelope,"tpvp");
+        SOAPElement tpvpElement = terminalRequestElement.addChildElement(tpvpName);
+        tpvpElement.setValue(Byte.toString(tpvp));
         return message;
     }
 
-    public Result callWebService(String iccid) throws Exception {
-        SOAPMessage request = createTerminalRequest(iccid);
-        request = secureMessage(request,LianTongSoapapiMessage.USER_NAME, LianTongSoapapiMessage.PASS_WORD);
+    public Result sendSMSService(String sentToIccId, String messageText, byte tpvp) throws Exception {
+        SOAPMessage request = createTerminalRequest(sentToIccId,messageText,tpvp);
+        request = secureMessage(request, LianTongSoapapiMessage.USER_NAME,LianTongSoapapiMessage.PASS_WORD);
         LOGGER.debug("request :"+request.getContentDescription());
 
         SOAPConnection connection = connectionFactory.createConnection();
@@ -124,23 +109,21 @@ public class GetTerminalDetailsClientImplServiceImpl extends BaseRepMessge imple
      */
     private String writeTerminalResponse(SOAPMessage message) throws SOAPException {
         SOAPEnvelope envelope = message.getSOAPPart().getEnvelope();
-        Name terminalResponseName = createName(envelope,"GetTerminalDetailsResponse");
+        Name terminalResponseName = createName(envelope,"SendSMSResponse");
         SOAPBodyElement terminalResponseElement = (SOAPBodyElement) message
                 .getSOAPBody().getChildElements(terminalResponseName).next();
-        Name terminals =createName(envelope,"terminals");
-        Name terminal = createName(envelope,"terminal");
-        SOAPBodyElement terminalsElement = (SOAPBodyElement) terminalResponseElement.getChildElements(terminals).next();
-        SOAPBodyElement terminalElement = (SOAPBodyElement) terminalsElement.getChildElements(terminal).next();
-        NodeList list = terminalElement.getChildNodes();
+        Name terminal =createName(envelope,"smsMsgId");
+        SOAPBodyElement terminalsElement = (SOAPBodyElement) terminalResponseElement.getChildElements(terminal).next();
+        NodeList list = terminalsElement.getChildNodes();
         Node n = null;
         for (int i = 0; i < list.getLength(); i ++) {
             n = list.item(i);
-            if ("status".equalsIgnoreCase(n.getLocalName())){
+            if ("smsMsgId".equalsIgnoreCase(n.getLocalName())){
                 break;
             }
         }
 
-       return  n.getTextContent();
+        return  n.getTextContent();
     }
 
     /**
@@ -170,7 +153,7 @@ public class GetTerminalDetailsClientImplServiceImpl extends BaseRepMessge imple
             }
         };
         InputStream policyStream = null;
-        XWSSProcessor processor;
+        XWSSProcessor processor = null;
         try {
             policyStream = getClass().getClassLoader().getResourceAsStream("soap/securityPolicy.xml");
             processor = processorFactory.createProcessorForSecurityConfiguration(policyStream, callbackHandler);
@@ -183,6 +166,4 @@ public class GetTerminalDetailsClientImplServiceImpl extends BaseRepMessge imple
         ProcessingContext context = processor.createProcessingContext(message);
         return processor.secureOutboundMessage(context);
     }
-
 }
-

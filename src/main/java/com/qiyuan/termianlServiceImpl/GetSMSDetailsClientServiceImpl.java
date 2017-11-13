@@ -1,20 +1,10 @@
-/**
- * Copyright 2005 Jasper Systems, Inc. All rights reserved.
- *
- * This software code is the confidential and proprietary information of
- * Jasper Systems, Inc. ("Confidential Information"). Any unauthorized
- * review, use, copy, disclosure or distribution of such Confidential
- * Information is strictly prohibited.
- */
 package com.qiyuan.termianlServiceImpl;
-
 
 import com.qiyuan.Base.BaseRepMessge;
 import com.qiyuan.entity.GetSMSDetailsReqMessage;
-import com.qiyuan.entity.Result;
-import com.qiyuan.terminalService.ApiClientConstantService;
-import com.qiyuan.entity.GetTerminalDetailReqMessage;
 import com.qiyuan.entity.LianTongSoapapiMessage;
+import com.qiyuan.entity.Result;
+import com.qiyuan.terminalService.GetSMSDetailsService;
 import com.qiyuan.utils.ResultUtil;
 import com.sun.xml.wss.ProcessingContext;
 import com.sun.xml.wss.XWSSProcessor;
@@ -25,33 +15,26 @@ import com.sun.xml.wss.impl.callback.UsernameCallback;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.annotation.Resource;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.servlet.http.HttpServletRequest;
 import javax.xml.soap.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-/**
- * Created by IntelliJ IDEA.
- * User: tonghengzhen
- * Date: 2017/10/20
- * Time: 10:07
- */
 
-@Service("apiClientConstantService")
-public class GetTerminalDetailsClientImplServiceImpl extends BaseRepMessge implements ApiClientConstantService{
+@Service("getSMSDetailsService")
+public class GetSMSDetailsClientServiceImpl extends BaseRepMessge implements GetSMSDetailsService {
+
 
     private  static Log LOGGER= LogFactory.getLog(GetTerminalDetailsClientImplServiceImpl.class);
-
 
 
     /**
@@ -61,12 +44,12 @@ public class GetTerminalDetailsClientImplServiceImpl extends BaseRepMessge imple
      * @throws MalformedURLException
      * @throws XWSSecurityException
      */
-    public GetTerminalDetailsClientImplServiceImpl()
+    public GetSMSDetailsClientServiceImpl()
             throws SOAPException, MalformedURLException, XWSSecurityException {
         connectionFactory = SOAPConnectionFactory.newInstance();
         messageFactory = MessageFactory.newInstance();
         processorFactory = XWSSProcessorFactory.newInstance();
-        lianTongSoapapiMessage=new LianTongSoapapiMessage(new GetTerminalDetailReqMessage());
+        lianTongSoapapiMessage=new LianTongSoapapiMessage(new GetSMSDetailsReqMessage());
     }
 
     /**
@@ -76,31 +59,33 @@ public class GetTerminalDetailsClientImplServiceImpl extends BaseRepMessge imple
      * @return SOAPMessage
      * @throws SOAPException
      */
-    private SOAPMessage createTerminalRequest(String iccid) throws SOAPException {
+    private SOAPMessage createTerminalRequest(String smsMsgId) throws SOAPException {
         SOAPMessage message = messageFactory.createMessage();
         message.getMimeHeaders().addHeader("SOAPAction",lianTongSoapapiMessage.getBaseRepMessge().getHeadPath());
         SOAPEnvelope envelope = message.getSOAPPart().getEnvelope();
-        Name terminalRequestName =createName(envelope,"GetTerminalDetailsRequest");
+        Name terminalRequestName = createName(envelope,"GetSMSDetailsRequest");
         SOAPBodyElement terminalRequestElement = message.getSOAPBody()
                 .addBodyElement(terminalRequestName);
         Name msgId = createName(envelope,"messageId");
         SOAPElement msgElement = terminalRequestElement.addChildElement(msgId);
         msgElement.setValue(LianTongSoapapiMessage.REQUEST_MESSAGE_ID);
-        Name version = createName(envelope,"version");
+        Name version =createName(envelope,"version");
         SOAPElement versionElement = terminalRequestElement.addChildElement(version);
         versionElement.setValue(LianTongSoapapiMessage.REQUEST_VERSION);
         Name license = createName(envelope,"licenseKey");
         SOAPElement licenseElement = terminalRequestElement.addChildElement(license);
         licenseElement.setValue(LianTongSoapapiMessage.REQUEST_LICENSE_KEY);
-        Name iccids = createName(envelope,"iccids");
-        SOAPElement iccidsElement = terminalRequestElement.addChildElement(iccids);
-        Name iccidName = createName(envelope,"iccid");
-        SOAPElement iccidElement = iccidsElement.addChildElement(iccidName);
-        iccidElement.setValue(iccid);
+        Name smsMsgIds =createName(envelope,"smsMsgIds");
+        SOAPElement smsMsgIdsElement = terminalRequestElement.addChildElement(smsMsgIds);
+        Name smsMsgIdName = createName(envelope,"smsMsgId");
+        SOAPElement smsMsgIdElement = smsMsgIdsElement.addChildElement(smsMsgIdName);
+        smsMsgIdElement.setValue(smsMsgId);
         return message;
     }
 
-    public Result callWebService(String iccid) throws Exception {
+    @Override
+    public Result getSMSDetails(String iccid) throws  Exception {
+        String terminalStatus="";
         SOAPMessage request = createTerminalRequest(iccid);
         request = secureMessage(request,LianTongSoapapiMessage.USER_NAME, LianTongSoapapiMessage.PASS_WORD);
         LOGGER.debug("request :"+request.getContentDescription());
@@ -124,11 +109,11 @@ public class GetTerminalDetailsClientImplServiceImpl extends BaseRepMessge imple
      */
     private String writeTerminalResponse(SOAPMessage message) throws SOAPException {
         SOAPEnvelope envelope = message.getSOAPPart().getEnvelope();
-        Name terminalResponseName = createName(envelope,"GetTerminalDetailsResponse");
+        Name terminalResponseName = createName(envelope,"GetSMSDetailsResponse");
         SOAPBodyElement terminalResponseElement = (SOAPBodyElement) message
                 .getSOAPBody().getChildElements(terminalResponseName).next();
-        Name terminals =createName(envelope,"terminals");
-        Name terminal = createName(envelope,"terminal");
+        Name terminals = createName(envelope,"smsMessages");
+        Name terminal = createName(envelope,"smsMessage");
         SOAPBodyElement terminalsElement = (SOAPBodyElement) terminalResponseElement.getChildElements(terminals).next();
         SOAPBodyElement terminalElement = (SOAPBodyElement) terminalsElement.getChildElements(terminal).next();
         NodeList list = terminalElement.getChildNodes();
@@ -140,7 +125,7 @@ public class GetTerminalDetailsClientImplServiceImpl extends BaseRepMessge imple
             }
         }
 
-       return  n.getTextContent();
+        return  n.getTextContent();
     }
 
     /**
@@ -156,6 +141,7 @@ public class GetTerminalDetailsClientImplServiceImpl extends BaseRepMessge imple
      */
     private SOAPMessage secureMessage(SOAPMessage message, final String username, final String password)
             throws IOException, XWSSecurityException {
+
         CallbackHandler callbackHandler = callbacks -> {
             for (int i = 0; i < callbacks.length; i++) {
                 if (callbacks[i] instanceof UsernameCallback) {
@@ -183,6 +169,4 @@ public class GetTerminalDetailsClientImplServiceImpl extends BaseRepMessge imple
         ProcessingContext context = processor.createProcessingContext(message);
         return processor.secureOutboundMessage(context);
     }
-
 }
-
