@@ -9,16 +9,22 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.annotation.Resource;
+import javax.persistence.Column;
+import javax.persistence.EntityManagerFactory;
 
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import com.qiyuan.dao.DataDao;
 import com.qiyuan.service.IBaseService;
 
-@Service("baseService")
+@Component("baseService")
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-public class BaseServiceImpl implements IBaseService {
+public class BaseServiceImpl  implements IBaseService {
 
 	@Resource
 	public DataDao dataDao;

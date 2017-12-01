@@ -11,7 +11,28 @@ spring:
       encoding:
         charset: utf-8
         enabled: true #是否开启http的编码支持
-
+    jackson:
+      date-format: yyyy-MM-dd HH:mm:ss
+    aop:
+      proxy-target-class: true
+#    kafka:
+#      bootstrap-servers: 172.16.20.132:9092
+#      producer:
+#            retries: 0
+#            batch-size: 16384
+#            buffer-memory: 33554432
+#            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+#            value-serializer: org.apache.kafka.common.serialization.StringSerializer
+#      consumer:
+##            group-id: foo
+#            auto-offset-reset: earliest
+#            enable-auto-commit: true
+#            auto-commit-interval: 100
+#            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#    cache:
+#      ehcache:
+#        config: classpath:ehcache/ehcache.xml
 #spring boot监控（比如：线程数，jvm剩余内存）
 #ep:http://localhost:8808/admin/metrics
 management:
@@ -21,26 +42,9 @@ management:
     context-path: /admin
 
 
+logging:
+    level:
+    config: classpath:logback/logback-prod.xml
 
 
-#联通SoapApi
-#LianTongSoapapiMessage:
-#   userName: panjuanjuan
-#   passWord: shjj123456
-#   requestLicenseKey: 23079646-c276-47e1-bf50-3200a7ce842e
-#   namespaceUri: http://api.jasperwireless.com/ws/schema
-#   prefix: jws
-#   requestMessageId: TCE-100-ABC-34084
-#   requestVersion: 1.0
-#   #获取锁的状态
-#   GetTerminalDetailReqMessage:
-#     headPath: http://api.jasperwireless.com/ws/service/terminal/GetTerminalDetails
-#     reqUrl: https://api.10646.cn/ws/service/terminal;
-#   #获取短信状态
-#   GetSMSDetailsReqMessage:
-#     headPath: http://api.jasperwireless.com/ws/service/sms/GetSMSDetails
-#     reqUrl: https://api.10646.cn/ws/service/Sms;
-#   #发送短信到设备上
-#   SendSmSReqMessage:
-#     headPath: http://api.jasperwireless.com/ws/service/sms/SendSMS
-#     reqUrl: https://api.10646.cn/ws/service/Sms;
+

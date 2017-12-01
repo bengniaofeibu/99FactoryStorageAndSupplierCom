@@ -25,43 +25,43 @@ public class BikeInfo extends BasePojo{
 	@Column(name = "bicycle_no", length = 10, nullable = false)
 	private Integer bicycleNo;
 	
-	@Column(name = "bicycle_status", length = 2, nullable = false)
+	@Column(name = "bicycle_status", length = 2, nullable = false,columnDefinition = "INT default 0")
 	private Integer bicycleStatus;
 
-	@Column(name="battery_status")
+	@Column(name="battery_status",nullable = false,columnDefinition = "INT default 0")
 	private  Integer batteryStatus;
 
-	@Column(name="binding_status")
+	@Column(name="binding_status",nullable = false,columnDefinition = "INT default 0")
     private  Integer bindingStatus;
 
-	@Column(name = "break_status")
+	@Column(name = "break_status",nullable = false,columnDefinition = "INT default 0")
 	private Integer  breakStatus;
 
-	@Column(name = "charge_status")
+	@Column(name = "charge_status",nullable = false,columnDefinition = "INT default 0")
 	private  Integer chargeStatus;
 
-	@Column(name = "corpse_status")
+	@Column(name = "corpse_status",nullable = false,columnDefinition = "INT default 0")
 	private  Integer corpse_status;
 
-	@Column(name = "fence_status")
+	@Column(name = "fence_status",nullable = false,columnDefinition = "INT default 0")
 	private  Integer fence_status;
 
-	@Column(name = "online_status")
+	@Column(name = "online_status",nullable = false,columnDefinition = "INT default 0")
 	private Integer onlineStatus;
 
-	@Column(name = "ride_status")
+	@Column(name = "ride_status",nullable = false,columnDefinition = "INT default 0")
     private  Integer rideStatus;
 
-	@Column(name = "shutdown_status")
+	@Column(name = "shutdown_status",nullable = false,columnDefinition = "INT default 0")
 	private  Integer shutdownStatus;
 
-	@Column(name = "activity_status")
+	@Column(name = "activity_status",nullable = false,columnDefinition = "INT default 1")
 	private  Integer activityStatus;
 
-	@Column(name = "suspect_break_status")
+	@Column(name = "suspect_break_status",nullable = false,columnDefinition = "INT default 0")
 	private  Integer suspectBreakStatus;
 
-	@Column(name = "recall_status")
+	@Column(name = "recall_status",nullable = false,columnDefinition = "INT default 0")
 	private  Integer recallStatus;
 
 	@Column(name = "current_longitude", length = 50)
@@ -107,6 +107,9 @@ public class BikeInfo extends BasePojo{
 	
 	@Column(name = "gprs_no", length = 50)
 	private String gprsNo;
+
+	@Column(name = "lock_series",length = 11,columnDefinition = "INT default 1")
+	private Integer lockSeries;
 	
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "last_connect_time")
@@ -378,7 +381,15 @@ public class BikeInfo extends BasePojo{
 		this.gprsNo = gprsNo;
 	}
 
-	public Date getLastConnectTime() {
+    public Integer getLockSeries() {
+        return lockSeries;
+    }
+
+    public void setLockSeries(Integer lockSeries) {
+        this.lockSeries = lockSeries;
+    }
+
+    public Date getLastConnectTime() {
 		return lastConnectTime;
 	}
 

@@ -1,24 +1,23 @@
 package com.qiyuan.FatoryAndSupplierServer;
 
 import com.daoshun.exception.NullParameterException;
-import com.google.gson.Gson;
 import com.qiyuan.Base.BaseController;
+import com.qiyuan.annotation.SystemServerLog;
 import com.qiyuan.baiduUtil.BaiduYingYanUtilTest;
 import com.qiyuan.common.CommonUtils;
 import com.qiyuan.common.Constant;
 import com.qiyuan.common.PushtoSingle;
-import com.qiyuan.entity.CancelBikeInfo;
-import com.qiyuan.entity.Result;
 import com.qiyuan.enums.FactoryEnum;
 import com.qiyuan.pojo.*;
 import com.qiyuan.service.*;
-import com.qiyuan.terminalService.ApiClientConstantService;
-import com.qiyuan.terminalService.GetSMSDetailsService;
-import com.qiyuan.terminalService.SendSMSService;
+import com.qiyuan.utils.JSON;
 import com.qiyuan.utils.StringCommonUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+
 import javax.annotation.Resource;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -27,6 +26,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URLDecoder;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -77,175 +77,231 @@ public class FactoryServerController extends BaseController{
     @Resource
     private IChangeBarcodeRecord changeBarcodeRecordService;
 
-    /**
-     * 获取锁的状态
-     */
-    @Resource(name = "apiClientConstantService")
-    private ApiClientConstantService apiClientConstantService;
-
-    @Resource(name="sendSMSService")
-    private SendSMSService sendSMSService;
-
-    @Resource(name="getSMSDetailsService")
-    private GetSMSDetailsService getSMSDetailsService;
-
-
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     //接口入口
-    protected void factorCallingService(HttpServletRequest request, HttpServletResponse response)
+    protected Map<String, Object> factorCallingService(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        Map<String, Object> reponseMap=null;
         try {
             String action = getAction(request, response);
             //锁的接口
             switch (action) {
                 case Constant.LOGIN:
-                    Login(request, response);//登入接口
+                    reponseMap=Login(request);//登入接口
                     break;
                 case Constant.UPLOADTERMINALINFO:
-                    uploadTerminalInfo(request, response);//入库接口
+                    reponseMap=uploadTerminalInfo(request, response);//入库接口
                     break;
                 case Constant.GETBLUETOOTHINFO:
-                    getBluetoothInfo(request, response);//入库蓝牙开锁接口
+                    reponseMap=getBluetoothInfo(request);//入库蓝牙开锁接口
                     break;
                 case Constant.GETBLUETOOTHINFOBYID:
-                    getBluetoothInfoById(request, response);//赳赳开锁蓝牙开锁接口
+                    reponseMap= getBluetoothInfoById(request, response);//赳赳开锁蓝牙开锁接口
                     break;
-               /* case Constant.FACTORYGPRSOPENLOCK:
-                    factoryGprsOpenLock(request, response);//入库GPRS开锁接口
-                    break;*/
+                 case Constant.FACTORYGPRSOPENLOCK:
+                    reponseMap=factoryGprsOpenLock(request, response);//入库GPRS开锁接口
+                    break;
                 case Constant.FACTORYGPRSOPENLOCKBYID:
-                    factoryGprsOpenLockById(request, response);////开单车电机锁或助力车电机锁
+                    reponseMap=factoryGprsOpenLockById(request, response);//开单车电机锁或助力车电机锁
                     break;
                 case Constant.FACTORYGPRSOPENLOCKBYSIMNO:
-                    factoryGprsOpenLockBySimNo(request, response);
+                    reponseMap=factoryGprsOpenLockBySimNo(request);
+                    break;
+                case Constant.UPDATELOCK:
+                    reponseMap=updateLock(request,response);//升级锁接口
+                    break;
+                case Constant.UPDATELOCKBYSIMNO:
+                    reponseMap=updateLockBySimNo(request,response);//入库前升级锁接口
                     break;
                 case Constant.ISSTORAGE:
-                    isStorage(request, response);//车辆是否入库
+                    reponseMap=isStorage(request);//车辆是否入库
                     break;
                 case Constant.QUERYLOCKREALDATA:
-                    queryLockRealData(request, response);//查询锁详情接口
+                    reponseMap=queryLockRealData(request);//查询锁详情接口
                     break;
                 case Constant.GETAPPVERSION:
-                    getAppVersion(request, response);//获取app版本信息接口
+                    reponseMap=getAppVersion(request);//获取app版本信息接口
                     break;
                 case Constant.GETKEYPSW:
-                    getKeyPsw(request, response);//获取key，psw接口
+                    reponseMap=getKeyPsw(request);//获取key，psw接口
                     break;
                 case Constant.CHANGEPSW:
-                    changePsw(request, response);//更换app密码接口
+                    reponseMap=changePsw(request);//更换app密码接口
                     break;
                 case Constant.LOGOUT:
-                    logOut(request, response);//登出接口
+                    reponseMap=logOut(request);//登出接口
                     break;
                 case Constant.CHANGEBARCODE:
-                    changeBarcode(request, response);//更换二维码接口
+                    reponseMap=changeBarcode(request);//更换二维码接口
                     break;
                 case Constant.GPRSOPENBATTERYLOCK:
-                    gprsOpenBatteryLock(request, response);//GPRS开电池锁
+                    reponseMap=gprsOpenBatteryLock(request, response);//GPRS开电池锁
                     break;
                 case Constant.GPRSCLOSEMOTORLOCK:
-                    gprsCloseMotorLock(request, response);//GPRS开电机锁
+                    reponseMap=gprsCloseMotorLock(request, response);//GPRS开电机锁
                     break;
                 case Constant.GETSIMNOBYBARCODE:
-                    getSimNoByBarcode(request, response); //获取simNo
+                    reponseMap=getSimNoByBarcode(request, response); //获取simNo
                     break;
                 case Constant.QUERYLOCKBYSIMNO:
-                    queryLockBysimNo(request,response);//入库前查询版本接口
+                    reponseMap=queryLockBysimNo(request);//入库前查询版本接口
                     break;
                 case Constant.QUERYLOCK:
-                    queryLock(request,response);//查询锁版本接口
+                    reponseMap=queryLock(request,response);//查询锁版本接口
                     break;
                 case Constant.SENDQUERYLOCKCMDBYSIMNO:
-                    sendQueryLockCmdBySimNo(request,response);//入库前下发查询锁版本命令接口
+                    reponseMap=sendQueryLockCmdBySimNo(request,response);//入库前下发查询锁版本命令接口
                     break;
                 case Constant.SENDQUERYLOCKCMD:
-                    sendQueryLockCmd(request,response);//下发查询锁版本命令接口
+                    reponseMap=sendQueryLockCmd(request,response);//下发查询锁版本命令接口
                     break;
                 case Constant.GETBARCODEBYSIMNO:
-                    getBarcodeBySimNo(request, response);
-                    break;
-                case Constant.GET_LIANTONG_LOCK_STATUS:
-                    getBicycleLockStatus(response);//获取车辆锁的状态(联通)
-                    break;
-                case  Constant.SEND_SMS_LOCK:
-                    sendSmSLock(response); //发送短信到设备上(联通)
-                    break;
-                case  Constant.GET_SMS_DETAILS:
-                    getSMSDetails(response); //获取短信是否送达到设备上的状态(联通)
+                    reponseMap=getBarcodeBySimNo(request, response);
                     break;
                 case Constant.GETBIKEINFO:
-                    getBikeInfo(request,response);
+                    reponseMap=getBikeInfo(request);
                     break;
                 case Constant.OPEN_BATTERY_LOCK:
-                    openBatteryLock(request,response);//开助力车电池锁接口
+                    reponseMap=openBatteryLock(request,response);//开助力车电池锁接口
                     break;
                 case Constant.CONTRO_LELECTRIC_LOCK:
-                    closeMopedLectricLock(request,response);//关助力车电机锁接口
+                    reponseMap=closeMopedLectricLock(request,response);//关助力车电机锁接口
                     break;
                 case Constant.GET_CANCELLATION_LOCK_INFO:
-                    getCancellationLockInfo(request,response); //获取注销锁的信息
+                    reponseMap= getCancellationLockInfo(request,response); //获取注销锁的信息
+                    break;
+                case Constant.SEND_SMS_OPBAT_LOCK://短信开电瓶锁
+                case Constant.SEND_SMS_UNLOCK: //短信解锁
+                case Constant.SEND_SMS_FCUN_LOCK://短信强制开锁
+                    //短信开电瓶锁
+                    reponseMap=sendSMSLock(request,response,action);
                     break;
                 default:
                     throw new NullParameterException();
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
-            setResultWhenException(response, e.getMessage());
+           LOGGER.error(e.getMessage());
         }
+        return  reponseMap;
     }
 
-    //获取短信是否送达到设备上的状态(联通)
-    private void getSMSDetails(HttpServletResponse response) {
+
+    //入库前升级锁接口
+    private Map<String, Object> updateLockBySimNo(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
+
+		String simNo ="";
+		String updateVersion ="";
+		String cmd ="";
+		try {
+            Map<String, String> requestMap = getRequestParam3DES(request);
+            simNo = requestMap.get("simNo");//二维码
+			updateVersion = requestMap.get("updateVersion");//二维码
+			cmd = requestMap.get("cmd");// 命令
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+
+			if (simNo.length()==12){
+				if (cmd.equals("updateLock")) {
+					BikeInfo bikeInfo = bikeService.getBikeInfoBySimNo(simNo);
+					if (bikeInfo==null) {
+						int res = CommonUtils.SendUpdateLockCmd(simNo,updateVersion);
+						if (res == Constant.Success) {
+						    return reponseResult(FactoryEnum.OPEN_LOCK_OK);
+						} else {
+						    return reponseResult(FactoryEnum.OPEN_LOCK_FAIL);
+						}
+					} else {
+						return reponseResult(FactoryEnum.SIM_NO_ALREADY_BINDING);
+					}
+				 } else {
+				       return reponseResult(FactoryEnum.CMD_ERROR);
+				}
+
+			}else {
+				return reponseResult(FactoryEnum.SIM_NO_ERROR);
+			}
+	}
+
+	//升级指令
+    private Map<String,Object> updateLock(HttpServletRequest request,HttpServletResponse response) throws NullParameterException {
+		String barcode ="";
+		String updateVersion ="";
+		String cmd ="";
+		try {
+            Map<String, String> requestMap = getRequestParam3DES(request);
+			barcode = requestMap.get("barcode");//二维码
+			updateVersion = requestMap.get("updateVersion");//二维码
+			cmd = requestMap.get("cmd");// 命令
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		     if(cmd.equals("updateLock")){
+                    String bicycleNum = getBicycleNum(response, barcode, BAR_CODE, FactoryEnum.BARCODE_URL_ERROR);
+					System.out.println(bicycleNum);
+					BikeInfo bikeInfo = bikeService.getBikeInfoByBicycleNum(bicycleNum);
+					if(bikeInfo != null){
+						int res = CommonUtils.SendUpdateLockCmd(bikeInfo.getSimNo(),updateVersion);
+						if(res == Constant.Success){
+						    return reponseResult(FactoryEnum.OPEN_LOCK_OK);
+						}else{
+							return reponseResult(FactoryEnum.OPEN_LOCK_FAIL);
+						}
+					}else{
+						return reponseResult(FactoryEnum.BICYCLE_NUM_NOT_BINDING);
+					}
+			}else{
+				return reponseResult(FactoryEnum.CMD_ERROR);
+			}
+	}
+
+
+    /**
+     * 短信操作锁
+     * @param request
+     * @return
+     */
+    private Map<String,Object> sendSMSLock(HttpServletRequest request, HttpServletResponse response, String action){
+        String barcode="";
+        String id = "";
         try {
-            String smsId=getReqParam("smsId");
-            Result result = getSMSDetailsService.getSMSDetails(smsId);
-            if (result.getCode()== 200){
-                reponseResult(response,FactoryEnum.GET_SMS_DETAILS_OK,result.getData());
-            }else{
-                reponseResult(response,FactoryEnum.GET_SMS_DETAILS_FAIL);
+            Map<String, String> requestParam = getRequestParam(request);
+            barcode=requestParam.get("barcode");
+            id = requestParam.get("id");
+            LockFactoryEmployeeInfo employeeInfo = lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
+                if (employeeInfo!=null){
+                   String bicycleNum;
+                        if (judgeBarcodeURL(barcode,BAR_CODE)){
+                            bicycleNum=getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
+                        }else {
+                            bicycleNum=barcode;
+                        }
+                     BikeInfo  bikeInfo = bikeService.getBikeInfoByBicycleNum(bicycleNum);
+                    if (bikeInfo!=null){
+                        if (bikeInfo.getLockSeries()==2){
+                            return CommonUtils.sendSMSLock(bikeInfo.getGprsNo(),action);
+                        }else {
+                            return reponseResult(FactoryEnum.DEVICE_CANNOT_SEND_SMS);
+                        }
+                    }else {
+                        return reponseResult(FactoryEnum.GET_BICK_SUPPLIER_NAME_UNFOUND);
+                    }
+            }else {
+                return reponseResult(FactoryEnum.USER_NOT_FOUND_FAIL);
             }
-        } catch (Exception e) {
-            setResultWhenException(response,e.getMessage());
+        }catch (Exception e){
+            LOGGER.error(e.getMessage());
         }
 
+        return null;
     }
 
-    //获取车辆锁的状态(联通)
-    private  void getBicycleLockStatus(HttpServletResponse response){
-        try {
-            String iccid=getReqParam("iccid");
-            Result result = apiClientConstantService.callWebService(iccid);
-            if (result.getCode()== 200){
-                reponseResult(response,FactoryEnum.GET_BICYLE_LOCK_OK,result.getData());
-            }else{
-                reponseResult(response,FactoryEnum.GET_BICYLE_LOCK_FAIL);
-            }
-        } catch (Exception e) {
-            setResultWhenException(response,e.getMessage());
-        }
 
-    }
-
-    //发送短信到设备上(联通)
-    private  void sendSmSLock(HttpServletResponse response){
-        try {
-            String iccid=getReqParam("iccid");
-            String message=getReqParam("message");
-            byte tpvp=Byte.valueOf(getReqParam("tpvp"));
-            Result result = sendSMSService.sendSMSService(iccid,message,tpvp);
-            if (result.getCode()== 200){
-                reponseResult(response,FactoryEnum.SMS_SEND_OK,result.getData());
-            }else{
-                reponseResult(response,FactoryEnum.SMS_SEND_FAIL);
-            }
-        } catch (Exception e) {
-            setResultWhenException(response,e.getMessage());
-        }
-
-    }
-
-    private void changeBarcode(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
+    private Map<String, Object> changeBarcode(HttpServletRequest request) throws NullParameterException {
         Map<String, Object> resultMap = new HashMap<>();
         String newBarcode = "";
         String oldBarcode = "";
@@ -256,7 +312,7 @@ public class FactoryServerController extends BaseController{
             oldBarcode = requestParam.get("oldBarcode");// 命令
             id = requestParam.get("id");
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
 
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo = lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
@@ -311,11 +367,10 @@ public class FactoryServerController extends BaseController{
             resultMap.put("code", Constant.Error_AccountNoExist);
             resultMap.put("message", "用户不存在");
         }
-
-        setResult(response, resultMap);
+       return resultMap;
     }
 
-    protected void getAppVersion(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
+    protected Map<String, Object> getAppVersion(HttpServletRequest request) throws NullParameterException {
         Map<String, Object> resultMap = new HashMap<>();
 
         String id ="";
@@ -325,7 +380,7 @@ public class FactoryServerController extends BaseController{
             id = requestParam.get("id");
             appId = requestParam.get("appId");
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
 
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo=lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
@@ -344,11 +399,11 @@ public class FactoryServerController extends BaseController{
             resultMap.put("result","fail");
             resultMap.put("message", "用户不存在");
         }
-        setResult(response, resultMap);
+     return resultMap;
     }
 
 
-    protected void queryLockRealData(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
+    protected Map<String, Object> queryLockRealData(HttpServletRequest request) throws NullParameterException{
         Map<String, Object> resultMap =new HashMap<String, Object>();
         String simNo = request.getParameter("simNo");
         CommonUtils.validateEmpty(simNo);
@@ -371,11 +426,11 @@ public class FactoryServerController extends BaseController{
             resultMap.put("result","fail");
             resultMap.put("message", "用户不存在");
         }
-        setResult(response, resultMap);
+        return resultMap;
     }
 
 
-    protected void isStorage(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
+    protected Map<String, Object> isStorage(HttpServletRequest request) throws NullParameterException{
         Map<String, Object> resultMap =new HashMap<String, Object>();
         String mac = request.getParameter("mac");// mac地址
         CommonUtils.validateEmpty(mac);
@@ -414,57 +469,13 @@ public class FactoryServerController extends BaseController{
             resultMap.put("result","fail");
             resultMap.put("message", "用户不存在");
         }
-        setResult(response, resultMap);
+       return resultMap;
     }
 
-    /*protected void factoryGprsOpenLock(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
-        Map<String, Object> resultMap =new HashMap<String, Object>();
-        String barcode ="";
-        String cmd ="";
-        try {
-            Map<String, String> requestParam = getRequestParam(request);
-            barcode = requestParam.get("barcode");//二维码
-            cmd = requestParam.get("cmd");// 命令
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
 
-        if(CMD_GPRS_OPEN_LOCK.equals(cmd)){
-            if(barcode.indexOf("http://www.99bicycle.com") != -1){
-                System.out.println("有效二维码");
-                int index = barcode.indexOf("b=");
-                System.out.println("index:" + index);
-                String bicycleNum = barcode.substring(index + 2);
-                System.out.println(bicycleNum);
-
-                BikeInfo bikeInfo = bikeService.getBikeInfoByBicycleNum(bicycleNum);
-                if(bikeInfo != null){
-                    int res = CommonUtils.SendOpenLockCmd(bikeInfo.getSimNo());
-                    if(res == Constant.Success){
-                        resultMap.put("result", "ok");
-                        resultMap.put("message", "指令发送成功");
-                    }else{
-                        resultMap.put("result", "fail");
-                        resultMap.put("message", "指令发送失败");
-                    }
-                }else{
-                    resultMap.put("result", "fail");
-                    resultMap.put("message", "此设备没绑定");
-                }
-
-            }else{
-                resultMap.put("result", "fail");
-                resultMap.put("message", "非法二维码");
-            }
-        }else{
-            resultMap.put("result", "fail");
-            resultMap.put("message", "非法指令");
-        }
-        setResult(response, resultMap);
-    }*/
 
     //开单车电机锁或助力车电机锁 （6开头的是助力车 ，5开头是单车）
-    protected void factoryGprsOpenLockById(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
+    protected Map<String, Object> factoryGprsOpenLockById(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
         String barcode ="";
         String cmd ="";
         String id="";
@@ -476,7 +487,7 @@ public class FactoryServerController extends BaseController{
                 id = requestParam.get("id");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo = lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (lockFactoryEmployeeInfo != null) {
@@ -492,34 +503,67 @@ public class FactoryServerController extends BaseController{
                         //助力车
                          mopedInfo = bikeService.getMopedInfo(bicycleNum);
                         if (mopedInfo==null){
-                            reponseResult(response,FactoryEnum.BICYCLE_NUM_NOT_BINDING);
+                            return reponseResult(FactoryEnum.BICYCLE_NUM_NOT_BINDING);
                         }
                         res = CommonUtils.SendControlMopedElectriclock(mopedInfo.getSimNo(),OPEN_MOPED_LOCK_FLAG);
                     }else if (StringCommonUtil.startsWithStr(bicycleNum,BICYCLE_SIGN)){
                         //单车
                          bikeInfo = bikeService.getBikeInfoByBicycleNum(bicycleNum);
                         if (bikeInfo==null){
-                            reponseResult(response,FactoryEnum.BICYCLE_NUM_NOT_BINDING);
+                           return reponseResult(FactoryEnum.BICYCLE_NUM_NOT_BINDING);
                         }
                         res = CommonUtils.SendOpenLockCmd(bikeInfo.getSimNo());
                     }else {
-                        reponseResult(response, FactoryEnum.BICYCLE_NUM_ERROR);
+                        return reponseResult(FactoryEnum.BICYCLE_NUM_ERROR);
                     }
 
                     if (res == Constant.Success) {
-                        reponseResult(response, FactoryEnum.OPEN_LOCK_OK);
+                       return reponseResult(FactoryEnum.OPEN_LOCK_OK);
                     } else {
-                        reponseResult(response, FactoryEnum.OPEN_LOCK_FAIL);
+                      return reponseResult(FactoryEnum.OPEN_LOCK_FAIL);
                     }
 
             } else {
-                reponseResult(response, FactoryEnum.CMD_ERROR);
+                return reponseResult( FactoryEnum.CMD_ERROR);
             }
+        }
+        return null;
+    }
 
+    //入库GPRS开锁接口
+    private Map<String, Object> factoryGprsOpenLock(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
+        String barcode ="";
+        String cmd ="";
+        try {
+            Map<String, String> requestMap = getRequestParam3DES(request);
+            barcode = requestMap.get("barcode");//二维码
+            cmd = requestMap.get("cmd");// 命令
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+         if(cmd.equals("gprsOpenLock")){
+                String bicycleNum = getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
+                System.out.println(bicycleNum);
+
+                BikeInfo bikeInfo = bikeService.getBikeInfoByBicycleNum(bicycleNum);
+                if(bikeInfo != null){
+                    int res = CommonUtils.SendOpenLockCmd(bikeInfo.getSimNo());
+                    if(res == Constant.Success){
+                        return reponseResult(FactoryEnum.OPEN_LOCK_OK);
+                    }else{
+                        return reponseResult(FactoryEnum.OPEN_LOCK_FAIL);
+                    }
+                }else{
+                     return reponseResult(FactoryEnum.BICYCLE_NUM_NOT_BINDING);
+                }
+        }else{
+             return reponseResult(FactoryEnum.CMD_ERROR);
         }
     }
 
-    protected void factoryGprsOpenLockBySimNo(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
+
+    protected Map<String, Object> factoryGprsOpenLockBySimNo(HttpServletRequest request) throws NullParameterException {
         Map<String, Object> resultMap = new HashMap<>();
 
         String simNo ="";
@@ -529,7 +573,7 @@ public class FactoryServerController extends BaseController{
             simNo = requestParam.get("simNo");//二维码
             cmd = requestParam.get("cmd");
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
 
         if (simNo.length() == 12) {
@@ -557,15 +601,11 @@ public class FactoryServerController extends BaseController{
             resultMap.put("result", "fail");
             resultMap.put("message", "非法设备ID");
         }
-
-
-        setResult(response, resultMap);
-
+        return resultMap;
     }
 
-    protected void logOut(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
+    protected Map<String, Object> logOut(HttpServletRequest request) throws NullParameterException {
         Map<String, Object> resultMap = new HashMap<>();
-
         String id ="";
         String type ="";
         try {
@@ -573,7 +613,7 @@ public class FactoryServerController extends BaseController{
             id = requestParam.get("id");
             type = requestParam.get("type");
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
 
 
@@ -592,10 +632,10 @@ public class FactoryServerController extends BaseController{
             resultMap.put("code", Constant.Error_LogOut);
             resultMap.put("message", "登出失败");
         }
-        setResult(response, resultMap);
+        return resultMap;
     }
 
-    protected void getBluetoothInfo(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
+    protected Map<String, Object> getBluetoothInfo(HttpServletRequest request) throws NullParameterException{
         Map<String, Object> resultMap =new HashMap<String, Object>();
         String barcode ="";
         String cmd ="";
@@ -604,7 +644,7 @@ public class FactoryServerController extends BaseController{
             barcode = requestParam.get("barcode");//二维码
             cmd = requestParam.get("cmd");// 命令
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
         if(cmd.equals("getBleMessage")){
             if(barcode.indexOf("http://www.99bicycle.com") != -1){
@@ -647,10 +687,10 @@ public class FactoryServerController extends BaseController{
             resultMap.put("key", "");
             resultMap.put("pass","");
         }
-        setResult(response, resultMap);
+        return resultMap;
     }
 
-    protected void getBluetoothInfoById(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
+    protected Map<String, Object> getBluetoothInfoById(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
         String barcode ="";
         String cmd ="";
         String id="";
@@ -660,7 +700,7 @@ public class FactoryServerController extends BaseController{
             cmd = requestParam.get("cmd");// 命令
             id = requestParam.get("id");
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo=lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (lockFactoryEmployeeInfo!=null){
@@ -676,74 +716,74 @@ public class FactoryServerController extends BaseController{
                         //助力车
                          mopedInfo = bikeService.getMopedInfo(bicycleNum);
                         if(mopedInfo != null){
-                            reponseBluetoothParam(response,mopedInfo,FLAG_1);
+                           return reponseBluetoothParam(mopedInfo,FLAG_1);
                         }else{
                             //已经注销
                             CancellationBikeInfo cancellationBikeInfo = bikeService.getCancellationBikeInfo(bicycleNum);
                             if (cancellationBikeInfo!=null){
-                                reponseBluetoothParam(response,cancellationBikeInfo,FLAG_0);
+                                return reponseBluetoothParam(cancellationBikeInfo,FLAG_0);
                             } else {
-                                reponseBluetoothParam(response,null,null);
+                                return reponseBluetoothParam(null,null);
                             }
                         }
                     }else if (StringCommonUtil.startsWithStr(bicycleNum,BICYCLE_SIGN)){
                         //单车
                         info = bikeService.getBikeInfoByBicycleNum(bicycleNum);
                         if(info != null){
-                            reponseBluetoothParam(response,info,FLAG_1);
+                           return reponseBluetoothParam(info,FLAG_1);
                         }else{
                             CancellationBikeInfo cancellationBikeInfo = bikeService.getCancellationBikeInfo(bicycleNum);
                             if (cancellationBikeInfo!=null){
-                                reponseBluetoothParam(response,cancellationBikeInfo,FLAG_0);
+                                return reponseBluetoothParam(cancellationBikeInfo,FLAG_0);
                             } else {
-                                reponseBluetoothParam(response,null,null);
+                               return reponseBluetoothParam(null,null);
                             }
                         }
                     }else {
-                        reponseResult(response, FactoryEnum.BICYCLE_NUM_ERROR);
+                        return reponseResult(FactoryEnum.BICYCLE_NUM_ERROR);
                     }
                 }else{
                     if(StringCommonUtil.startsWithStr(barcode,MOPED_SIGN) && barcode.length() == 9 ){
                         //助力车
                         ElectricBikeInfo mopedInfo = bikeService.getMopedInfo(barcode);
                         if(mopedInfo != null){
-                            reponseBluetoothParam(response,mopedInfo,FLAG_1);
+                           return reponseBluetoothParam(mopedInfo,FLAG_1);
                         }else{
                             CancellationBikeInfo cancellationBikeInfo = bikeService.getCancellationBikeInfo(barcode);
                             if (cancellationBikeInfo!=null){
-                                reponseBluetoothParam(response,cancellationBikeInfo,FLAG_0);
+                                return reponseBluetoothParam(cancellationBikeInfo,FLAG_0);
                             } else {
-                                reponseBluetoothParam(response,null,null);
+                               return reponseBluetoothParam(null,null);
                             }
                         }
                     }else if (StringCommonUtil.startsWithStr(barcode,BICYCLE_SIGN) && barcode.length() == 9){
                         //单车
                         BikeInfo info = bikeService.getBikeInfoByBicycleNum(barcode);
                         if(info != null){
-                            reponseBluetoothParam(response,info,FLAG_1);
+                            return reponseBluetoothParam(info,FLAG_1);
                         }else{
                             CancellationBikeInfo cancellationBikeInfo = bikeService.getCancellationBikeInfo(barcode);
                             if (cancellationBikeInfo!=null){
-                                reponseBluetoothParam(response,cancellationBikeInfo,FLAG_0);
+                               return reponseBluetoothParam(cancellationBikeInfo,FLAG_0);
                             } else {
-                                reponseBluetoothParam(response,null,null);
+                               return reponseBluetoothParam(null,null);
                             }
                         }
                     } else{
-                        reponseBluetoothParam(response,null,null);
+                        return reponseBluetoothParam(null,null);
                     }
 
                 }
             }else{
-                reponseBluetoothParam(response,null,null);
+              return reponseBluetoothParam(null,null);
             }
         }else{
-           reponseResult(response,FactoryEnum.USER_NOT_FOUND_FAIL);
+          return reponseResult(FactoryEnum.USER_NOT_FOUND_FAIL);
         }
     }
 
 
-    protected void  Login(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
+    protected Map<String, Object>  Login(HttpServletRequest request) throws NullParameterException {
         Map<String, Object> resultMap = new HashMap<String,Object>();
 
         String realName ="";
@@ -756,7 +796,7 @@ public class FactoryServerController extends BaseController{
             passWord = requestParam.get("passWord");
             adminCid = requestParam.get("adminCid");
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo = lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoByRealName(realName);
         LockFactoryEmployeeInfo info = lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfo(realName);
@@ -801,13 +841,11 @@ public class FactoryServerController extends BaseController{
             resultMap.put("code", Constant.Error_AccountNoExist);
             resultMap.put("message", "用户不存在");
         }
-
-        setResult(response, resultMap);
+        return  resultMap;
     }
 
 
-    //获取注销锁的信息
-    private void  getCancellationLockInfo(HttpServletRequest request,HttpServletResponse response){
+    public Map<String, Object>  getCancellationLockInfo(HttpServletRequest request,HttpServletResponse response){
         try {
             Map<String, String> requestParam = getRequestParam(request);
             String barcode = requestParam.get("barcode");//二维码
@@ -818,22 +856,22 @@ public class FactoryServerController extends BaseController{
                 JSONObject lockInfo = CommonUtils.getCancellationLockInfo(bicycleNo);
                 int lockCode = Integer.valueOf(lockInfo.get("code").toString());
                 if (lockCode==0){
-                    Gson gson=new Gson();
-                    CancelBikeInfo map=gson.fromJson(lockInfo.get("data").toString(), CancelBikeInfo.class);
-                    reponseResult(response, FactoryEnum.GET_CANCELLATION_LOCK_INFO_OK,map,"flag",FLAG_0);
+                    CancellationBikeInfo cancelBikeInfo= JSON.parseObject(lockInfo.get("data").toString(), CancellationBikeInfo.class);
+                    return reponseResult(FactoryEnum.GET_CANCELLATION_LOCK_INFO_OK,cancelBikeInfo,"flag",FLAG_0);
                 }else {
-                    reponseResult(response,FactoryEnum.GET_CANCELLATION_LOCK_INFO_FAIL,"");
+                 return reponseResult(FactoryEnum.GET_CANCELLATION_LOCK_INFO_FAIL,"");
                 }
             }else {
-                reponseResult(response,FactoryEnum.GET_BIKE_INFO_FAIL,"","flag",FLAG_1);
+               return reponseResult(FactoryEnum.GET_BIKE_INFO_FAIL,"","flag",FLAG_1);
             }
         }catch (Exception e){
-           setResultWhenException(response,e.getMessage());
+            LOGGER.error(e.getMessage());
         }
+        return null;
     }
 
     //开助力车电池锁接口
-    private  void   openBatteryLock(HttpServletRequest request,HttpServletResponse response){
+    private  Map<String, Object> openBatteryLock(HttpServletRequest request,HttpServletResponse response){
 
         try {
             Map<String, String> requestParam = getRequestParam(request);
@@ -841,49 +879,48 @@ public class FactoryServerController extends BaseController{
             String bicycleNum = getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
             ElectricBikeInfo mopedInfo = bikeService.getMopedInfo(bicycleNum);
             if (mopedInfo==null){
-                reponseResult(response, FactoryEnum.BICYCLE_NUM_NOT_BINDING);
-                return;
+                return reponseResult(FactoryEnum.BICYCLE_NUM_NOT_BINDING);
+
             }
 //            String openBatteryLock=getReqParam("openBatteryLock");
             int repInfo = CommonUtils.SendOpenMopedBatteryLock(mopedInfo.getSimNo());
             if (repInfo==Constant.Success) {
-                reponseResult(response, FactoryEnum.OPEN_LOCK_OK);
+                return reponseResult(FactoryEnum.OPEN_LOCK_OK);
             }else{
-                reponseResult(response, FactoryEnum.OPEN_LOCK_FAIL);
+                return reponseResult(FactoryEnum.OPEN_LOCK_FAIL);
             }
         }catch (Exception e){
-            setResultWhenException(response,e.getMessage());
+            LOGGER.error(e.getMessage());
         }
+        return null;
     }
 
     //操作助力车电机锁接口
-    private  void  closeMopedLectricLock(HttpServletRequest request,HttpServletResponse response){
+    private  Map<String, Object>  closeMopedLectricLock(HttpServletRequest request,HttpServletResponse response){
         try {
             Map<String, String> requestParam = getRequestParam(request);
             String barcode = requestParam.get("barcode");//二维码
             String bicycleNum = getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
             ElectricBikeInfo mopedInfo = bikeService.getMopedInfo(bicycleNum);
-            Map<String, Object> resultMap = null;
             if (mopedInfo==null){
-                resultMap=getReponseMap(FactoryEnum.BICYCLE_NUM_NOT_BINDING);
-                setResult(response,resultMap);
-                return;
+               return getReponseMap(FactoryEnum.BICYCLE_NUM_NOT_BINDING);
             }
 //            String closeMotorLock=getReqParam("closeMotorLock");
 //            Integer flag = Integer.valueOf(getReqParam("flag"));
             int repInfo=CommonUtils.SendControlMopedElectriclock(mopedInfo.getSimNo(),CLOSE_MOPED_LOCK_FLAG);
             if (repInfo==Constant.Success) {
-                reponseResult(response, FactoryEnum.OPEN_LOCK_OK);
+                return reponseResult(FactoryEnum.OPEN_LOCK_OK);
             }else{
-                reponseResult(response, FactoryEnum.OPEN_LOCK_FAIL);
+                return reponseResult(FactoryEnum.OPEN_LOCK_FAIL);
             }
         }catch (Exception e){
-            setResultWhenException(response,e.getMessage());
+            LOGGER.error(e.getMessage());
         }
+        return null;
     }
 
-    private void getBikeInfo(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
-        Map<String, Object> resultMap = new HashMap<String, Object>();
+    private Map<String, Object> getBikeInfo(HttpServletRequest request) throws NullParameterException {
+        Map<String, Object> resultMap = new HashMap<>();
         String unknownNo =request.getParameter("unknownNo");
         CommonUtils.validateEmpty(unknownNo);
 
@@ -911,12 +948,11 @@ public class FactoryServerController extends BaseController{
             resultMap.put("result", "fail");
             resultMap.put("message", "非法id！");
         }
-        setResult(response,resultMap);
+        return resultMap;
     }
 
 
-    protected void getBarcodeBySimNo(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
-        Map<String, Object> resultMap = new HashMap<String, Object>();
+    protected Map<String, Object> getBarcodeBySimNo(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
         String simNo;
         try {
             Map<String, String> requestParam3DES = getRequestParam3DES(request);
@@ -931,27 +967,26 @@ public class FactoryServerController extends BaseController{
                     if (lockTerminalInfo != null) {
                         StringBuffer barcode=new StringBuffer();
                         barcode.append("http://www.99bicycle.com/download/?b=").append(bicycleNo);
-                        reponseResult(response,FactoryEnum.GET_SIM_NO_INFO_OK,barcode.toString());
+                        return reponseResult(FactoryEnum.GET_SIM_NO_INFO_OK,barcode.toString());
                     } else {
-                        reponseResult(response,FactoryEnum.NOT_FOUND_SIM_NO_OK);
+                        return reponseResult(FactoryEnum.NOT_FOUND_SIM_NO_OK);
                     }
                 } else {
-                    reponseResult(response,FactoryEnum.GET_BICK_SUPPLIER_NAME_UNFOUND);
+                    return reponseResult(FactoryEnum.GET_BICK_SUPPLIER_NAME_UNFOUND);
                 }
             } else {
-                reponseResult(response,FactoryEnum.GET_BICK_SUPPLIER_NAME_UNFOUND);
+                return reponseResult(FactoryEnum.GET_BICK_SUPPLIER_NAME_UNFOUND);
             }
         }else {
-            reponseResult(response,FactoryEnum.SIM_NO_ERROR);
+            return reponseResult(FactoryEnum.SIM_NO_ERROR);
         }
         } catch (Exception e) {
-            setResultWhenException(response,e.getMessage());
+            LOGGER.error(e.getMessage());
         }
-        setResult(response, resultMap);
+        return null;
     }
 
-    private void sendQueryLockCmd(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
-		Map<String, Object> resultMap =new HashMap<>();
+    private Map<String, Object> sendQueryLockCmd(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
 		String barcode ="";
 		String cmd ="";
 		try {
@@ -959,7 +994,7 @@ public class FactoryServerController extends BaseController{
             barcode = requestParam3DES.get("barcode");//二维码
 			cmd = requestParam3DES.get("cmd");// 命令
 		} catch (Exception e) {
-			e.printStackTrace();
+            LOGGER.error(e.getMessage());
 		}
 			if(cmd.equals("queryLock")){
 					System.out.println("有效二维码");
@@ -969,25 +1004,21 @@ public class FactoryServerController extends BaseController{
 					if(bikeInfo != null){
 						int res = CommonUtils.SendQueryLockCmd(bikeInfo.getSimNo());
 						if(res == Constant.Success){
-						    reponseResult(response,FactoryEnum.OPEN_LOCK_OK);
+						    return reponseResult(FactoryEnum.OPEN_LOCK_OK);
 						}else{
-						    reponseResult(response,FactoryEnum.OPEN_LOCK_FAIL);
+						    return reponseResult(FactoryEnum.OPEN_LOCK_FAIL);
 						}
 					}else{
-					    reponseResult(response,FactoryEnum.BICYCLE_NUM_NOT_BINDING);
+					    return reponseResult(FactoryEnum.BICYCLE_NUM_NOT_BINDING);
 					}
 				}else{
-				    reponseResult(response,FactoryEnum.BARCODE_URL_ERROR);
+				    return reponseResult(FactoryEnum.BARCODE_URL_ERROR);
 				}
-
-		setResult(response, resultMap);
-	}
+	   }
 
 
 
-    private void sendQueryLockCmdBySimNo(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
-		Map<String, Object> resultMap = new HashMap<>();
-
+    private Map<String, Object> sendQueryLockCmdBySimNo(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
 		String simNo ="";
 		String cmd ="";
 		try {
@@ -995,7 +1026,7 @@ public class FactoryServerController extends BaseController{
             simNo = requestParam3DES.get("simNo");//二维码
 			cmd = requestParam3DES.get("cmd");// 命令
 		} catch (Exception e) {
-			e.printStackTrace();
+            LOGGER.error(e.getMessage());
 		}
 
 		if (simNo.length() == 12) {
@@ -1004,34 +1035,29 @@ public class FactoryServerController extends BaseController{
 				if (bikeInfo == null) {
 					int res = CommonUtils.SendQueryLockCmd(simNo);
 					if (res == Constant.Success) {
-					    reponseResult(response,FactoryEnum.OPEN_LOCK_FAIL);
+					   return reponseResult(FactoryEnum.OPEN_LOCK_FAIL);
 					} else {
-					    reponseResult(response,FactoryEnum.OPEN_LOCK_FAIL);
+					   return reponseResult(FactoryEnum.OPEN_LOCK_FAIL);
 					}
 				} else {
-				    reponseResult(response,FactoryEnum.SIM_NO_ALREADY_BINDING);
+				    return reponseResult(FactoryEnum.SIM_NO_ALREADY_BINDING);
 				}
 			} else {
-			    reponseResult(response,FactoryEnum.CMD_ERROR);
+			   return reponseResult(FactoryEnum.CMD_ERROR);
 			}
 		} else {
-		    reponseResult(response,FactoryEnum.SIM_NO_ERROR);
+		    return reponseResult(FactoryEnum.SIM_NO_ERROR);
 		}
-
-		setResult(response, resultMap);
-
 	}
 
-
-    private void queryLock(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
-		Map<String, Object> resultMap =new HashMap<>();
-
+    //获取锁的版本好
+    private Map<String, Object> queryLock(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
 		String barcode ="";
 		try {
             Map<String, String> requestParam3DES = getRequestParam3DES(request);
             barcode = requestParam3DES.get("barcode");//二维码
 		} catch (Exception e) {
-			e.printStackTrace();
+            LOGGER.error(e.getMessage());
 		}
 				System.out.println("有效二维码");
                 String bicycleNum =getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
@@ -1041,54 +1067,48 @@ public class FactoryServerController extends BaseController{
 				if(bikeInfo != null){
 					LockTerminalInfo lockTerminalInfo = lockTerminalService.getInfoBySimNo(bikeInfo.getSimNo());
 					if(lockTerminalInfo != null){
-					    reponseResult(response,FactoryEnum.GET_SIM_NO_INFO_OK,bikeInfo.getVerSoftware());
+					    return reponseResult(FactoryEnum.GET_SIM_NO_INFO_OK,bikeInfo.getVerSoftware(),"onlineStatus",bikeInfo.getOnlineStatus());
 					}else{
-					    reponseResult(response,FactoryEnum.NOT_FOUND_SIM_NO_OK);
+					    return reponseResult(FactoryEnum.NOT_FOUND_SIM_NO_OK);
 					}
 				}else{
-				    reponseResult(response,FactoryEnum.BICYCLE_NUM_NOT_BINDING);
+				    return reponseResult(FactoryEnum.BICYCLE_NUM_NOT_BINDING);
 				}
-		setResult(response, resultMap);
 	}
 
-    private void queryLockBysimNo(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
-		Map<String, Object> resultMap = new HashMap<>();
+    private Map<String, Object> queryLockBysimNo(HttpServletRequest request) throws NullParameterException {
 		String simNo ="";
 		try {
             Map<String,String> requestParam3DES=getRequestParam3DES(request);
 			simNo = requestParam3DES.get("simNo");//二维码
 		} catch (Exception e) {
-			e.printStackTrace();
+            LOGGER.error(e.getMessage());
 		}
 			if (simNo.length()==12){
 				BikeInfo bikeInfo = bikeService.getBikeInfoBySimNo(simNo);
 				if(bikeInfo == null){
 					LockTerminalInfo lockTerminalInfo = lockTerminalService.getInfoBySimNo(simNo);
 					if(lockTerminalInfo != null){
-					    reponseResult(response,FactoryEnum.GET_SIM_NO_INFO_OK,lockTerminalInfo.getVerSoftware());
+					    return reponseResult(FactoryEnum.GET_SIM_NO_INFO_OK,lockTerminalInfo.getVerSoftware());
 					}else{
-					    reponseResult(response,FactoryEnum.NOT_FOUND_SIM_NO_OK);
+					    return reponseResult(FactoryEnum.NOT_FOUND_SIM_NO_OK);
 					}
 				}else{
-				    reponseResult(response,FactoryEnum.SIM_NO_ALREADY_BINDING);
+				    return reponseResult(FactoryEnum.SIM_NO_ALREADY_BINDING);
 				}
 			}else {
-		           reponseResult(response,FactoryEnum.SIM_NO_ERROR);
+		           return reponseResult(FactoryEnum.SIM_NO_ERROR);
 			}
-
-		setResult(response, resultMap);
-
 	}
 
 
-    protected void getSimNoByBarcode(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
-        Map<String, Object> resultMap = new HashMap<String, Object>();
+    protected Map<String, Object> getSimNoByBarcode(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
         String barcode ="";
         try {
             Map<String, String> requestParam3DES = getRequestParam3DES(request);
             barcode = requestParam3DES.get("barcode");//二维码
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
             System.out.println("有效二维码");
             String bicycleNum =getBicycleNum(response,barcode,BAR_CODE,FactoryEnum.BARCODE_URL_ERROR);
@@ -1098,21 +1118,19 @@ public class FactoryServerController extends BaseController{
                 if(bikeInfo != null){
                     LockTerminalInfo lockTerminalInfo = lockTerminalService.getInfoBySimNo(bikeInfo.getSimNo());
                     if(lockTerminalInfo != null){
-                        reponseResult(response,FactoryEnum.GET_SIM_NO_INFO_OK,bikeInfo.getSimNo());
+                       return reponseResult(FactoryEnum.GET_SIM_NO_INFO_OK,bikeInfo.getSimNo());
                     }else{
-                        reponseResult(response,FactoryEnum.NOT_FOUND_SIM_NO_OK);
+                       return reponseResult(FactoryEnum.NOT_FOUND_SIM_NO_OK);
                     }
                 }else{
-                    reponseResult(response,FactoryEnum.GET_BICK_SUPPLIER_NAME_UNFOUND);
+                    return reponseResult(FactoryEnum.GET_BICK_SUPPLIER_NAME_UNFOUND);
                 }
             }else {
-                reponseResult(response,FactoryEnum.GET_BICK_SUPPLIER_NAME_UNFOUND);
+                return reponseResult(FactoryEnum.GET_BICK_SUPPLIER_NAME_UNFOUND);
             }
-
-        setResult(response, resultMap);
     }
 
-    protected void gprsCloseMotorLock(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
+    protected Map<String, Object> gprsCloseMotorLock(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
         String barcode ="";
         String cmd ="";
         String id="";
@@ -1122,7 +1140,7 @@ public class FactoryServerController extends BaseController{
             cmd = requestParam.get("cmd");// 命令
             id = requestParam.get("id");
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo = lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (lockFactoryEmployeeInfo != null) {
@@ -1137,31 +1155,32 @@ public class FactoryServerController extends BaseController{
                     if (StringCommonUtil.startsWithStr(bicycleNum,MOPED_SIGN)){
                         mopedInfo = bikeService.getMopedInfo(bicycleNum);
                         if (mopedInfo==null){
-                            reponseResult(response,FactoryEnum.BICYCLE_NUM_NOT_BINDING);
+                            return reponseResult(FactoryEnum.BICYCLE_NUM_NOT_BINDING);
                         }
                         res = CommonUtils.SendControlMopedElectriclock(mopedInfo.getSimNo(),OPEN_MOPED_LOCK_FLAG);
                     }else if (StringCommonUtil.startsWithStr(bicycleNum,BICYCLE_SIGN)){
                         bikeInfo = bikeService.getBikeInfoByBicycleNum(bicycleNum);
                         if (bikeInfo==null){
-                            reponseResult(response,FactoryEnum.BICYCLE_NUM_NOT_BINDING);
+                            return reponseResult(FactoryEnum.BICYCLE_NUM_NOT_BINDING);
                         }
                         res = CommonUtils.SendOpenLockCmd(bikeInfo.getSimNo());
                     }else {
-                        reponseResult(response, FactoryEnum.BICYCLE_NUM_ERROR);
+                        return reponseResult(FactoryEnum.BICYCLE_NUM_ERROR);
                     }
                     if (res == Constant.Success) {
-                        reponseResult(response, FactoryEnum.OPEN_LOCK_OK);
+                       return reponseResult(FactoryEnum.OPEN_LOCK_OK);
                     } else {
-                        reponseResult(response, FactoryEnum.OPEN_LOCK_FAIL);
+                        return reponseResult(FactoryEnum.OPEN_LOCK_FAIL);
                     }
             } else {
-                reponseResult(response,FactoryEnum.CMD_ERROR);
+               return reponseResult(FactoryEnum.CMD_ERROR);
             }
 
         }
+        return null;
     }
 
-    protected void gprsOpenBatteryLock(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
+    protected Map<String, Object> gprsOpenBatteryLock(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
         String barcode ="";
         String cmd ="";
         String id="";
@@ -1171,7 +1190,7 @@ public class FactoryServerController extends BaseController{
             cmd = requestParam.get("cmd");// 命令
             id = requestParam.get("id");
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo = lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (lockFactoryEmployeeInfo != null) {
@@ -1186,32 +1205,32 @@ public class FactoryServerController extends BaseController{
                     if (StringCommonUtil.startsWithStr(bicycleNum,MOPED_SIGN)){
                         mopedInfo = bikeService.getMopedInfo(bicycleNum);
                         if (mopedInfo==null){
-                             reponseResult(response,FactoryEnum.BICYCLE_NUM_NOT_BINDING);
+                             return reponseResult(FactoryEnum.BICYCLE_NUM_NOT_BINDING);
                         }
                         res = CommonUtils.SendControlMopedElectriclock(mopedInfo.getSimNo(),OPEN_MOPED_LOCK_FLAG);
                     }else if (StringCommonUtil.startsWithStr(bicycleNum,BICYCLE_SIGN)){
                         bikeInfo = bikeService.getBikeInfoByBicycleNum(bicycleNum);
                         if (bikeInfo==null){
-                            reponseResult(response,FactoryEnum.BICYCLE_NUM_NOT_BINDING);
+                            return reponseResult(FactoryEnum.BICYCLE_NUM_NOT_BINDING);
                         }
                         res = CommonUtils.SendOpenLockCmd(bikeInfo.getSimNo());
                     }else {
-                        reponseResult(response, FactoryEnum.BICYCLE_NUM_ERROR);
+                        return reponseResult(FactoryEnum.BICYCLE_NUM_ERROR);
                     }
                     if (res == Constant.Success) {
-                        reponseResult(response, FactoryEnum.OPEN_LOCK_OK);
+                        return reponseResult(FactoryEnum.OPEN_LOCK_OK);
                     } else {
-                        reponseResult(response, FactoryEnum.OPEN_LOCK_FAIL);
+                        return reponseResult(FactoryEnum.OPEN_LOCK_FAIL);
                     }
             } else {
-                reponseResult(response,FactoryEnum.CMD_ERROR);
+                return reponseResult(FactoryEnum.CMD_ERROR);
             }
         }
+        return null;
     }
 
-    private void changePsw(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
+    private Map<String, Object> changePsw(HttpServletRequest request) throws NullParameterException {
         Map<String, Object> resultMap = new HashMap<String, Object>();
-
         String oldPassword ="";
         String realName ="";
         String id="";
@@ -1223,7 +1242,7 @@ public class FactoryServerController extends BaseController{
             id = requestParam.get("id");
             newPassword = requestParam.get("newPassword");
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
 
         LockFactoryEmployeeInfo resInfo=lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
@@ -1247,10 +1266,10 @@ public class FactoryServerController extends BaseController{
             resultMap.put("code", Constant.Error_AccountNoExist);
             resultMap.put("message", "用户不存在");
         }
-        setResult(response, resultMap);
+       return resultMap;
     }
 
-    protected void getKeyPsw(HttpServletRequest request, HttpServletResponse response) throws NullParameterException {
+    protected Map<String, Object> getKeyPsw(HttpServletRequest request) throws NullParameterException {
         Map<String, Object> resultMap = new HashMap<String, Object>();
         String mac ="";
         String id ="";
@@ -1259,7 +1278,7 @@ public class FactoryServerController extends BaseController{
             id = requestParam.get("id");
             mac = requestParam.get("mac");
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
         LockFactoryEmployeeInfo lockFactoryEmployeeInfo=lockFactoryEmployeeInfoService.getLockFactoryEmployeeInfoById(id);
         if (lockFactoryEmployeeInfo!=null){
@@ -1315,10 +1334,10 @@ public class FactoryServerController extends BaseController{
             resultMap.put("result","fail");
             resultMap.put("message", "用户不存在");
         }
-        setResult(response, resultMap);
+        return resultMap;
     }
 
-    protected void uploadTerminalInfo(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
+    protected Map<String, Object> uploadTerminalInfo(HttpServletRequest request,HttpServletResponse response) throws NullParameterException{
         Map<String, Object> resultMap =new HashMap<String, Object>();
 
         String barcode ="";
@@ -1343,7 +1362,7 @@ public class FactoryServerController extends BaseController{
             md5reply=requestParam.get("md5reply");
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
 
         LOGGER.info("发来的信息:" + "蓝牙:" + mac);
@@ -1406,19 +1425,16 @@ public class FactoryServerController extends BaseController{
                     bikeUpdateInfo.setUpdateTime(new Date());
 //                    bikeService.recordBikeUpdateInfo(bikeUpdateInfo);
 
-
-
                 }else if (cityNo==0 && count==0){
                     //simNo已经绑定过
                     resultMap.put("result", "fail");
                     resultMap.put("message", "绑定失败:此simNo已经存在");
-                    setResult(response, resultMap);
-                    return;
+                    return resultMap;
                 }else {
                     resultMap.put("result", "fail");
                     resultMap.put("message", "绑定失败:异常情况  cityNo :"+cityNo+" 解绑数量: "+count);
-                    setResult(response, resultMap);
-                    return;
+                    System.out.println(JSONObject.valueToString(resultMap));
+                    return resultMap;
                 }
             }
         }
@@ -1522,20 +1538,19 @@ public class FactoryServerController extends BaseController{
             resultMap.put("result","fail");
             resultMap.put("message", "用户不存在");
         }
-
-        setResult(response, resultMap);
+       return resultMap;
     }
 
     //返回蓝牙开锁所需要参数
-    private void reponseBluetoothParam(HttpServletResponse response,Object object,Integer flag){
+    private Map<String, Object> reponseBluetoothParam(Object object,Integer flag){
         Map<String,Object> resultMap=new HashMap<>();
 
           if(object==null || flag==null){
               resultMap.put("mac", "");
               resultMap.put("key", "");
               resultMap.put("pass","");
-              setResult(response,resultMap);
-              return;
+              System.out.println(JSONObject.valueToString(resultMap));
+              return resultMap;
           }
         Class aClass=object.getClass();
         Method method;
@@ -1553,13 +1568,15 @@ public class FactoryServerController extends BaseController{
             resultMap.put("key", CommonUtils.PackingFactoryInfo(newKey, "key"));
             resultMap.put("pass",CommonUtils.PackingFactoryInfo(newPassword, "pass"));
             resultMap.put("flag",flag);
-            setResult(response,resultMap);
+            System.out.println(JSONObject.valueToString(resultMap));
+            return resultMap;
         } catch (NoSuchMethodException e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         } catch (InvocationTargetException e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
+        return null;
     }
 }

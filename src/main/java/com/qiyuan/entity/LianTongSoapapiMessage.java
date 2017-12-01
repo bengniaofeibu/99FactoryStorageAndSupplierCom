@@ -1,7 +1,6 @@
 package com.qiyuan.entity;
 
 import com.qiyuan.Base.BaseRepMessge;
-import com.qiyuan.terminalService.GetSMSDetailsService;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 

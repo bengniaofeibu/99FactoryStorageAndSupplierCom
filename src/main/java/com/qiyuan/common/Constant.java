@@ -196,6 +196,12 @@ public class Constant {
 
 	public static final String GET_CANCELLATION_LOCK_INFO="GETCANCELLATIONLOCKINFO";
 
+	public static final String SEND_SMS_OPBAT_LOCK="SENDSMSOPBATLOCK";
+
+	public static final String SEND_SMS_FCUN_LOCK="SENDSMSFCUNLOCK";
+
+	public static final String SEND_SMS_UNLOCK="SENDSMSUNLOCK";
+
 	public static final String TEST = "TEST";
 
 

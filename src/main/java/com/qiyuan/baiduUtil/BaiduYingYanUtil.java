@@ -15,6 +15,9 @@ public class BaiduYingYanUtil {
 
 	private  static  final  String GET_BIKE_INFO_URL="http://172.16.20.133:8085/lock?action=GETBIKEINFO";
 
+	private static final String SEND_SMS_LOCK_URL="http://106.14.155.161/SMSComPro/Sms?action=";
+
+
 	public static String getRecEncoding() {
 		return recEncoding;
 	}
@@ -159,6 +162,12 @@ public class BaiduYingYanUtil {
 		return HttpRequestProxy.doPost(CONTROL_LECTRIC_LOCK_URL, params , getRecEncoding());
 	}
 
+	//短信操作锁
+	public static String sendSMSLock(Map<String,Object> params,String action){
+		return HttpRequestProxy.doPost(getSendSMSLockUrl(action), params , getRecEncoding());
+	}
+
+
 	//获取注销锁的信息接口
 	public static String getCancellationLockInfo(Map<String,Object> params){
 		  return  HttpRequestProxy.doPost(GET_CANCELLATION_LOCK_INFO_URL,params,getRecEncoding());
@@ -167,5 +176,11 @@ public class BaiduYingYanUtil {
     //获取车辆是否注销
 	public static String getBikeInfo(Map<String,Object> params){
 	    return HttpRequestProxy.doPost(GET_BIKE_INFO_URL,params,getRecEncoding());
+	}
+
+	//获取短信操作锁的acion
+	private static String getSendSMSLockUrl(String action){
+		StringBuilder builder=new StringBuilder(SEND_SMS_LOCK_URL);
+		return builder.append(action).toString();
 	}
 }

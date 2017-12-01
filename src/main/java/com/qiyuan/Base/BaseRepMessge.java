@@ -1,11 +1,20 @@
 package com.qiyuan.Base;
 
 import com.qiyuan.entity.LianTongSoapapiMessage;
+import com.sun.xml.wss.ProcessingContext;
+import com.sun.xml.wss.XWSSProcessor;
 import com.sun.xml.wss.XWSSProcessorFactory;
+import com.sun.xml.wss.XWSSecurityException;
+import com.sun.xml.wss.impl.callback.PasswordCallback;
+import com.sun.xml.wss.impl.callback.UsernameCallback;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.xml.soap.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 
 /**
@@ -59,9 +68,64 @@ public abstract class BaseRepMessge implements Serializable{
         this.reqUrl = reqUrl;
     }
 
-    protected static Name createName(SOAPEnvelope envelope, String name) throws SOAPException {
+    protected Name createName(SOAPEnvelope envelope, String name) throws SOAPException {
         Name terminalRequestName = envelope.createName(name, LianTongSoapapiMessage.PREFIX, LianTongSoapapiMessage.NAME_SPACE_URI);
         return terminalRequestName;
 
+    }
+
+    /**
+     * This method is used to add the security. This uses xwss:UsernameToken configuration and expects
+     * Username and Password to be passes. SecurityPolicy.xml file should be in classpath.
+     *
+     * @param message
+     * @param username
+     * @param password
+     * @return
+     * @throws IOException
+     * @throws XWSSecurityException
+     */
+    protected SOAPMessage secureMessage(SOAPMessage message, final String username, final String password)
+            throws IOException, XWSSecurityException {
+
+        CallbackHandler callbackHandler = callbacks -> {
+            for (int i = 0; i < callbacks.length; i++) {
+                if (callbacks[i] instanceof UsernameCallback) {
+                    UsernameCallback callback = (UsernameCallback) callbacks[i];
+                    callback.setUsername(username);
+                } else if (callbacks[i] instanceof PasswordCallback) {
+                    PasswordCallback callback = (PasswordCallback) callbacks[i];
+                    callback.setPassword(password);
+                } else {
+                    throw new UnsupportedCallbackException(callbacks[i]);
+                }
+            }
+        };
+        InputStream policyStream = null;
+        XWSSProcessor processor;
+        try {
+            policyStream = getClass().getClassLoader().getResourceAsStream("soap/securityPolicy.xml");
+            processor = processorFactory.createProcessorForSecurityConfiguration(policyStream, callbackHandler);
+        }
+        finally {
+            if (policyStream != null) {
+                policyStream.close();
+            }
+        }
+        ProcessingContext context = processor.createProcessingContext(message);
+        return processor.secureOutboundMessage(context);
+    }
+
+
+    protected void  addPublicAttribute(SOAPEnvelope envelope,SOAPBodyElement terminalRequestElement) throws SOAPException {
+        Name msgId = createName(envelope,"messageId");
+        SOAPElement msgElement = terminalRequestElement.addChildElement(msgId);
+        msgElement.setValue(LianTongSoapapiMessage.REQUEST_MESSAGE_ID);
+        Name version =createName(envelope,"version");
+        SOAPElement versionElement = terminalRequestElement.addChildElement(version);
+        versionElement.setValue(LianTongSoapapiMessage.REQUEST_VERSION);
+        Name license = createName(envelope,"licenseKey");
+        SOAPElement licenseElement = terminalRequestElement.addChildElement(license);
+        licenseElement.setValue(LianTongSoapapiMessage.REQUEST_LICENSE_KEY);
     }
 }

@@ -1,7 +1,7 @@
 spring:
   #数据源的配置
   datasource:
-    url: jdbc:mysql://139.196.194.172:3306/electric_bicycle_pro_test?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false
+    url: jdbc:mysql://139.196.194.172:3306/electric_bicycle_pro_test?useUnicode=true&characterEncoding=utf8&useSSL=false
     username: jjtest
     password: 99b39189a35c
     driver-class-name: com.mysql.jdbc.Driver
@@ -11,10 +11,11 @@ spring:
       min-idle: 5
       max-idle: 10
 
+
   #hibernate配置
   jpa:
     database: mysql
-    show-sql: true
+    show-sql: false
     hibernate:
        #Hibernate ddl auto (create, create-drop, update)
       ddl-auto: update
@@ -22,14 +23,25 @@ spring:
        hibernate:
          dialect: org.hibernate.dialect.MySQL5Dialect
          current_session_context_class: org.springframework.orm.hibernate4.SpringSessionContext
-
+#         cache:
+#            use_second_level_cache: true
+#            use_query_cache: true
+#            region:
+#              factory_class: org.hibernate.cache.ehcache.EhCacheRegionFactory
+#            provider_class: net.sf.ehcache.hibernate.EhCacheProvider
 
   #mvc视图的配置
   mvc:
      view:
        prefix: /page/
        suffix: .jsp
-
-
+  redis:
+    database: 0
+    host: 172.16.20.132
+    port: 6379
+    pool:
+      max-wait: 10000
+      max-active: 10
+      max-idle: 8
 
 

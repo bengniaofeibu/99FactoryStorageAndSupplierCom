@@ -1,7 +1,6 @@
 package com.qiyuan.entity;
 
 import com.qiyuan.Base.BaseRepMessge;
-import org.springframework.stereotype.Component;
 
 public class GetSMSDetailsReqMessage extends BaseRepMessge {
 

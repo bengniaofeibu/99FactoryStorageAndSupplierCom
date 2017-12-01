@@ -26,10 +26,11 @@ public class DataDao {
 		return sessionFactory.getCurrentSession();
 	}
 
+
 	/**
 	 * 添加对象记录
-	 * 
-	 * @param 需要添加的对象
+	 *
+	 * @param
 	 */
 	public void addObject(Object o) {
 //		Session session=getSession();
@@ -40,8 +41,8 @@ public class DataDao {
 
 	/**
 	 * 删除数据库中指定对象
-	 * 
-	 * @param 需要删除的对象
+	 *
+	 * @param
 	 */
 	public void deleteObject(Object o) {
 		getSession().delete(o);
@@ -49,31 +50,31 @@ public class DataDao {
 
 	/**
 	 * 更新数据库中指定对象
-	 * 
-	 * @param 需要更新的对象
+	 *
+	 * @param
 	 */
 	public void updateObject(Object o) {
 		getSession().update(o);
 	}
-	
+
 	public int executeBySql(String sql){
 		SQLQuery createSQLQuery = getSession().createSQLQuery(sql);
 		int result = createSQLQuery.executeUpdate();
 		return result;
 	}
-	
+
 	public String executesBySql(String sql){//返回某个字段
-	@SuppressWarnings("unchecked")
-	List<String> list = getSession().createSQLQuery(sql).list();
-	if(list.size()>0){
-		return String.valueOf(list.get(0));
-	}else{
-		return "";
+		@SuppressWarnings("unchecked")
+		List<String> list = getSession().createSQLQuery(sql).list();
+		if(list.size()>0){
+			return String.valueOf(list.get(0));
+		}else{
+			return "";
+		}
+
 	}
-	
-	}
-	
-	
+
+
 //	public List<?> excuteCardBySql(String sql){
 //		SQLQuery createSQLQuery =getSession().createSQLQuery(sql).addEntity(CardInfo.class);
 //		createSQLQuery.setString("account", account);
@@ -83,8 +84,8 @@ public class DataDao {
 
 	/**
 	 * 更新数据库中指定对象，如果对象记录不存在，则插入新的
-	 * 
-	 * @param 需要更新的对象
+	 *
+	 * @param
 	 */
 	public void saveOrUpdateObject(Object o) {
 		getSession().saveOrUpdate(o);
@@ -92,8 +93,8 @@ public class DataDao {
 
 	/**
 	 * 获取整张表的记录集合
-	 * 
-	 * @param 对象类型
+	 *
+	 * @param
 	 * @return 对象列表集合
 	 */
 	@SuppressWarnings("unchecked")
@@ -103,9 +104,9 @@ public class DataDao {
 
 	/**
 	 * 根据id查询对象记录
-	 * 
-	 * @param 查询对象类型
-	 * @param 查询对象ID
+	 *
+	 * @param
+	 * @param
 	 * @return 查询对象结果
 	 */
 	@SuppressWarnings("unchecked")
@@ -115,9 +116,9 @@ public class DataDao {
 
 	/**
 	 * 根据id删除对象记录
-	 * 
-	 * @param 删除对象类型
-	 * @param 删除对象ID
+	 *
+	 * @param
+	 * @param
 	 */
 	public <T> void deleteObjectById(Class<T> c, Serializable id) {
 		deleteObject(getObjectById(c, id));
@@ -125,10 +126,10 @@ public class DataDao {
 
 	/**
 	 * 条件检索对象数据集
-	 * 
-	 * @param 检索hql语句
-	 * @param 条件名称
-	 * @param 条件值
+	 *
+	 * @param
+	 * @param
+	 * @param
 	 * @return 检索结果数据集
 	 */
 	@SuppressWarnings("rawtypes")
@@ -148,7 +149,7 @@ public class DataDao {
 
 	/**
 	 * 条件检索对象数据集(省略参数名)
-	 * 
+	 *
 	 * @deprecated 使用 {@link DataDao#getObjectsViaParam(String, String[], Object...)}
 	 * @param hql
 	 * @param p
@@ -177,7 +178,7 @@ public class DataDao {
 
 	/**
 	 * 按条件查询数据条数
-	 * 
+	 *
 	 * @param hql
 	 *            查询hql语句，select count 检索
 	 * @param p
@@ -190,7 +191,7 @@ public class DataDao {
 
 	/**
 	 * 分页查询数据集
-	 * 
+	 *
 	 * @deprecated 使用 {@link DataDao#pageQueryViaParam(String, Integer, Integer, String[], Object...)}
 	 * @param hql
 	 *            查询hql语句
@@ -213,7 +214,7 @@ public class DataDao {
 
 	/**
 	 * 分页查询数据集
-	 * 
+	 *
 	 * @param hql
 	 *            查询hql语句
 	 * @param pageSize
@@ -241,7 +242,7 @@ public class DataDao {
 
 	/**
 	 * 按条件查询单条数据
-	 * 
+	 *
 	 * @deprecated 使用 {@link DataDao#getFirstObjectViaParam(String, String[], Object...)}
 	 * @param hql
 	 *            查询hql语句
@@ -260,7 +261,7 @@ public class DataDao {
 
 	/**
 	 * 按条件查询单条数据
-	 * 
+	 *
 	 * @param hql
 	 *            查询hql语句
 	 * @param params
@@ -279,7 +280,7 @@ public class DataDao {
 
 	/**
 	 * 按条件批量删除数据
-	 * 
+	 *
 	 * @deprecated 使用
 	 * @param hql
 	 *            删除hql语句，delete from 开头
@@ -297,7 +298,7 @@ public class DataDao {
 
 	/**
 	 * 按条件批量删除数据
-	 * 
+	 *
 	 * @param hql
 	 *            删除hql语句，delete from 开头
 	 * @param params
@@ -317,7 +318,7 @@ public class DataDao {
 
 	/**
 	 * 用SQL文批量删除数据集
-	 * 
+	 *
 	 * @param sql
 	 *            删除sql语句
 	 */
@@ -331,10 +332,10 @@ public class DataDao {
 	 * @param sql
 	 * @return
 	 */
-   public  List<?> getALLData(String sql){
-	   SQLQuery sqlQuery = getSession().createSQLQuery(sql);
-       return sqlQuery.list();
-   }
+	public  List<?> getALLData(String sql){
+		SQLQuery sqlQuery = getSession().createSQLQuery(sql);
+		return sqlQuery.list();
+	}
 
 	/**
 	 * 获得数据的count
@@ -390,7 +391,7 @@ public class DataDao {
 			}else  if (val instanceof  Long){
 				query.setLong(i,(Long) val);
 			}else if (val instanceof Date){
-                 query.setDate(i,(Date) val);
+				query.setDate(i,(Date) val);
 			}else {
 				throw  new  IllegalArgumentException("参数必须是String or Integer or Long  or Date类型");
 			}

@@ -1,6 +1,8 @@
 package com.qiyuan.pojo;
 
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.qiyuan.utils.CustomJsonDateDeserializer;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
@@ -9,7 +11,7 @@ import java.util.Date;
 
 @Entity
 @Table(name="t_cancellation_bike_info")
-public class CancellationBikeInfo implements Serializable{
+public class CancellationBikeInfo {
     @Id
     @GenericGenerator(name="uuid",strategy="uuid")
     @GeneratedValue(generator="uuid")
@@ -109,6 +111,7 @@ public class CancellationBikeInfo implements Serializable{
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "last_used_time")
+
     private Date lastUsedTime;
 
     @Column(name="fence_id")
@@ -130,6 +133,11 @@ public class CancellationBikeInfo implements Serializable{
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "delete_date")
     private Date deleteDate;
+    /*
+    注销车辆恢复置位符，1：已恢复，0：未恢复（默认0）
+     */
+    @Column(name = "restore_flag",length = 2)
+    private int restoreFlag;
 
     public CancellationBikeInfo(int bicycleNo, String newKey, String newPassword) {
         this.bicycleNo = bicycleNo;
@@ -148,6 +156,14 @@ public class CancellationBikeInfo implements Serializable{
     public CancellationBikeInfo() {
     }
 
+    public int getRestoreFlag() {
+        return restoreFlag;
+    }
+
+    public void setRestoreFlag(int restoreFlag) {
+        this.restoreFlag = restoreFlag;
+    }
+
     public Integer getActivityStatus() {
         return activityStatus;
     }
@@ -164,6 +180,7 @@ public class CancellationBikeInfo implements Serializable{
         this.shutdownStatus = shutdownStatus;
     }
 
+    @JsonDeserialize(using = CustomJsonDateDeserializer.class)
     public Date getShutdownTime() {
         return shutdownTime;
     }
@@ -176,6 +193,7 @@ public class CancellationBikeInfo implements Serializable{
         return lastUsedTime;
     }
 
+    @JsonDeserialize(using = CustomJsonDateDeserializer.class)
     public void setLastUsedTime(Date lastUsedTime) {
         this.lastUsedTime = lastUsedTime;
     }
@@ -240,6 +258,7 @@ public class CancellationBikeInfo implements Serializable{
         return lastChargeTime;
     }
 
+    @JsonDeserialize(using = CustomJsonDateDeserializer.class)
     public void setLastChargeTime(Date lastChargeTime) {
         this.lastChargeTime = lastChargeTime;
     }
@@ -328,6 +347,7 @@ public class CancellationBikeInfo implements Serializable{
         return addTime;
     }
 
+    @JsonDeserialize(using = CustomJsonDateDeserializer.class)
     public void setAddTime(Date addTime) {
         this.addTime = addTime;
     }
@@ -416,6 +436,7 @@ public class CancellationBikeInfo implements Serializable{
         return lastConnectTime;
     }
 
+    @JsonDeserialize(using = CustomJsonDateDeserializer.class)
     public void setLastConnectTime(Date lastConnectTime) {
         this.lastConnectTime = lastConnectTime;
     }
@@ -432,6 +453,7 @@ public class CancellationBikeInfo implements Serializable{
         return deleteDate;
     }
 
+    @JsonDeserialize(using = CustomJsonDateDeserializer.class)
     public void setDeleteDate(Date deleteDate) {
         this.deleteDate = deleteDate;
     }

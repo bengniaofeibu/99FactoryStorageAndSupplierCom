@@ -1,12 +1,16 @@
 package com.qiyuan.common;
 
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
+import org.apache.commons.codec.binary.Hex;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESedeKeySpec;
 import javax.crypto.spec.IvParameterSpec;
+import java.io.UnsupportedEncodingException;
 import java.security.Key;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * 3DES加密工具类
@@ -62,11 +66,33 @@ public class TripleDES {
         return new String( decryptData, encoding);
     }
 
+
+    /***
+     * SHA-256加密
+     * @param str 加密后的报文
+     * @return
+     */
+    public static String getSHA256Str(String str){
+        MessageDigest messageDigest;
+        try {
+            messageDigest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = messageDigest.digest(str.getBytes("UTF-8"));
+            return  Hex.encodeHexString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return  "";
+    }
+
     public static void main(String args[]) throws Exception{
         String str = "123123" ;
         System. out.println( "----加密前-----：" + str );
-        String encodeStr = TripleDES. encode( str);
-        System. out.println( "----加密后-----：" + encodeStr );
+        String encodeStr = TripleDES. getSHA256Str( str);
+        System. out.println( "----加密后-----：" + encodeStr.length() );
         System. out.println( "----解密后-----：" + TripleDES.decode( encodeStr));
+        String aa="96cae35ce8a9b0244178bf28e4966c2ce1b8385723a96a6b838858cdd6ca0a1e";
+        System.out.println(aa.length());
     }
 }

@@ -2,6 +2,7 @@ package com.qiyuan.serviceImpl;
 
 import com.qiyuan.pojo.BikeOutStorgeInfo;
 import com.qiyuan.service.IBikeOutStorgeService;
+import org.hibernate.Session;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;

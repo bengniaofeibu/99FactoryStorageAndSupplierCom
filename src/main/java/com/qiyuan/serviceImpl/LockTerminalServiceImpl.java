@@ -40,7 +40,6 @@ public class LockTerminalServiceImpl extends BaseServiceImpl implements ILockTer
 		shql.append("from LockTerminalInfo where simNo =:simNo ");
 		String[] params = { "simNo" };
 		LockTerminalInfo info = (LockTerminalInfo) dataDao.getFirstObjectViaParam(shql.toString(), params, simNo);
-		LockTerminalInfo info2 = (LockTerminalInfo) dataDao.getFirstObjectViaParam(shql.toString(), params, simNo);
 		return info;
 	}
 

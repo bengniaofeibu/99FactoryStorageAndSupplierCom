@@ -64,15 +64,7 @@ public class SendSmSClientImplServiceImpl extends BaseRepMessge implements SendS
         Name terminalRequestName = createName(envelope,"SendSMSRequest");
         SOAPBodyElement terminalRequestElement = message.getSOAPBody()
                 .addBodyElement(terminalRequestName);
-        Name msgId = createName(envelope,"messageId");
-        SOAPElement msgElement = terminalRequestElement.addChildElement(msgId);
-        msgElement.setValue(LianTongSoapapiMessage.REQUEST_MESSAGE_ID);
-        Name version = createName(envelope,"version");
-        SOAPElement versionElement = terminalRequestElement.addChildElement(version);
-        versionElement.setValue(LianTongSoapapiMessage.REQUEST_VERSION);
-        Name license = createName(envelope,"licenseKey");
-        SOAPElement licenseElement = terminalRequestElement.addChildElement(license);
-        licenseElement.setValue(LianTongSoapapiMessage.REQUEST_LICENSE_KEY);
+        addPublicAttribute(envelope,terminalRequestElement);//添加公共的属性值
         Name sentToIccIdName = createName(envelope,"sentToIccid");
         SOAPElement sentToIccIdElement = terminalRequestElement.addChildElement(sentToIccIdName);
         sentToIccIdElement.setValue(sentToIccId);
@@ -124,46 +116,5 @@ public class SendSmSClientImplServiceImpl extends BaseRepMessge implements SendS
         }
 
         return  n.getTextContent();
-    }
-
-    /**
-     * This method is used to add the security. This uses xwss:UsernameToken configuration and expects
-     * Username and Password to be passes. SecurityPolicy.xml file should be in classpath.
-     *
-     * @param message
-     * @param username
-     * @param password
-     * @return
-     * @throws IOException
-     * @throws XWSSecurityException
-     */
-    private SOAPMessage secureMessage(SOAPMessage message, final String username, final String password)
-            throws IOException, XWSSecurityException {
-        CallbackHandler callbackHandler = callbacks -> {
-            for (int i = 0; i < callbacks.length; i++) {
-                if (callbacks[i] instanceof UsernameCallback) {
-                    UsernameCallback callback = (UsernameCallback) callbacks[i];
-                    callback.setUsername(username);
-                } else if (callbacks[i] instanceof PasswordCallback) {
-                    PasswordCallback callback = (PasswordCallback) callbacks[i];
-                    callback.setPassword(password);
-                } else {
-                    throw new UnsupportedCallbackException(callbacks[i]);
-                }
-            }
-        };
-        InputStream policyStream = null;
-        XWSSProcessor processor = null;
-        try {
-            policyStream = getClass().getClassLoader().getResourceAsStream("soap/securityPolicy.xml");
-            processor = processorFactory.createProcessorForSecurityConfiguration(policyStream, callbackHandler);
-        }
-        finally {
-            if (policyStream != null) {
-                policyStream.close();
-            }
-        }
-        ProcessingContext context = processor.createProcessingContext(message);
-        return processor.secureOutboundMessage(context);
     }
 }

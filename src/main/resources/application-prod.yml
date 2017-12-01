@@ -1,15 +1,16 @@
 spring:
   #数据源的配置
   datasource:
-    url: jdbc:mysql://rm-uf69rclygox273t10.mysql.rds.aliyuncs.com:3306/electric_bicycle_pro?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false
+    url: jdbc:mysql://rm-uf69rclygox273t10.mysql.rds.aliyuncs.com:3306/electric_bicycle_pro?useUnicode=true&characterEncoding=utf8&useSSL=false
     username: jjdc_123
     password: jjdc_99bicycle
     driver-class-name: com.mysql.jdbc.Driver
     type: org.apache.commons.dbcp2.BasicDataSource
     dbcp2:
-      initial-size: 5
-      min-idle: 5
-      max-idle: 10
+      initial-size: 10
+      max-idle: 30
+      max-total: 50
+
 
   #hibernate配置
   jpa:
@@ -22,7 +23,12 @@ spring:
        hibernate:
          dialect: org.hibernate.dialect.MySQL5Dialect
          current_session_context_class: org.springframework.orm.hibernate4.SpringSessionContext
-
+#         cache:
+#           use_second_level_cache: true
+#           use_query_cache: true
+#           region:
+#             factory_class: org.hibernate.cache.ehcache.EhCacheRegionFactory
+#           provider_class: net.sf.ehcache.hibernate.EhCacheProvider
 
   #mvc视图的配置
   mvc:

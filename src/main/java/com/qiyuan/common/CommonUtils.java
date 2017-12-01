@@ -32,7 +32,7 @@ import java.util.UUID;
 import javax.net.ssl.HttpsURLConnection;
 import javax.servlet.http.HttpServletResponse;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.alibaba.fastjson.JSON;
 import org.apache.commons.io.FileUtils;
 //import org.apache.log4j.Logger;
 import org.json.JSONException;
@@ -57,6 +57,7 @@ import com.qiyuan.baiduUtil.BaiduYingYanUtil;
 
 @Component
 public class CommonUtils {
+
 
 	/**
 	 * 读取配置文件
@@ -984,7 +985,6 @@ public class CommonUtils {
 	public static int SendOpenMopedBatteryLock(String simNo){
 		Map<String,Object> params = new HashMap<String,Object>();
 		params.put("simNo", simNo);
-
 		JSONObject backResult;
 		try {
 			backResult = new JSONObject(BaiduYingYanUtil.openMopedBatteryLock(params));
@@ -1004,6 +1004,7 @@ public class CommonUtils {
         Map<String,Object> params = new HashMap<String,Object>();
         params.put("simNo", simNo);
         params.put("flag",flag);
+        params.put("actionType",0);
         JSONObject backResult;
         try {
             backResult = new JSONObject(BaiduYingYanUtil.controlMopedElectriclock(params));
@@ -1018,6 +1019,18 @@ public class CommonUtils {
             return 2;
         }
     }
+	//短信开电瓶锁
+	public static Map<String,Object> sendSMSLock(String iccid,String action){
+		Map<String,Object> params = new HashMap<String,Object>();
+		params.put("iccid", iccid);
+		try {
+			Map mapTypes = JSON.parseObject(BaiduYingYanUtil.sendSMSLock(params,action));
+			return mapTypes;
+		} catch (JSONException e) {
+		}
+		return null;
+	}
+
 
     //获取注销锁的信息
     public static JSONObject getCancellationLockInfo(String  bicycleNo){

@@ -24,23 +24,11 @@ public enum FactoryEnum implements EnumService{
 
     CHANGE_LOCK_OK(okCode,"换锁绑定成功"),
 
-    CHANGE_LOC_FAIL(failCode,"换锁绑定失败"),
-
     OPEN_LOCK_OK(okCode,"指令发送成功"),
 
     OPEN_LOCK_FAIL(failCode,"指令发送失败"),
 
-    GET_BICYLE_LOCK_OK(okCode,"获取锁的状态成功"),
-
-    GET_BICYLE_LOCK_FAIL(failCode,"获取锁的状态失败"),
-
-    SMS_SEND_OK(okCode,"短信发送成功"),
-
-    SMS_SEND_FAIL(failCode,"短信发送失败"),
-
-    GET_SMS_DETAILS_OK(okCode,"获取短信状态成功"),
-
-    GET_SMS_DETAILS_FAIL(failCode,"获取短信状态失败"),
+    DEVICE_CANNOT_SEND_SMS(failCode,"该车辆的ICCID不支持发短信"),
 
     GET_CANCELLATION_LOCK_INFO_OK(okCode,"获取注销锁信息成功"),
 

@@ -14,6 +14,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.json.JSONObject;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -32,7 +33,7 @@ import java.util.*;
 
 public class BaseController extends HttpServlet {
 
-    private   final Log LOGGER = LogFactory.getLog(getClass());
+    private   final Log LOGGER = LogFactory.getLog(BaseController.class);
     /**
      *
      */
@@ -40,7 +41,6 @@ public class BaseController extends HttpServlet {
     private Map<String, Object> paramMap = null;
 
 
-    private static  final String  CHANGE_LOCK_SUPPLIER_NAME="锁厂换锁绑定";
 
 
 
@@ -48,7 +48,7 @@ public class BaseController extends HttpServlet {
      * 判断BarcodeURL是否合法
      * @param barcodeURL
      */
-    protected   boolean  judgeBarcodeURL(String barcodeURL,String barCode){
+    protected  static boolean  judgeBarcodeURL(String barcodeURL,String barCode){
         return barcodeURL.indexOf(barCode)!=-1;
     }
 
@@ -80,14 +80,14 @@ public class BaseController extends HttpServlet {
         try {
             PrintWriter out = response.getWriter();
             // json格式转换
-            Gson gson = new GsonBuilder()/*.setDateFormat("yyyy-MM-dd HH:mm:ss")*/.disableHtmlEscaping().create();
-            String json = gson.toJson(resultMap);
-            out.print(json);
+            Gson gson = new GsonBuilder()/*.setDateFormat("yyyy-MM-dd HH:mm:ss").*/.disableHtmlEscaping().create();
+            String json=gson.toJson(resultMap);
             System.out.println(json);
+            out.print(json);
             out.flush();
             out.close();
         } catch (IOException e) {
-            e.printStackTrace();
+          LOGGER.error(e.getMessage());
         } finally {
             resultMap.clear();
         }
@@ -238,7 +238,6 @@ public class BaseController extends HttpServlet {
             }
             ObjectMapper json = new ObjectMapper();
             Map<String, String> requestMap = json.readValue(TripleDES.decode(reportBuilder.toString()), Map.class);
-//            Map<String, String> requestMap = json.readValue(reportBuilder.toString(), Map.class);
             //验证参数是否为空
             validateEmpty(requestMap);
             return  requestMap;
@@ -290,21 +289,18 @@ public class BaseController extends HttpServlet {
 
 
      //返回result结果
-     protected void reponseResult(HttpServletResponse response,EnumService enumService){
-         Map<String, Object> reponseMap = getReponseMap(enumService);
-         setResult(response,reponseMap);
+     protected Map<String, Object> reponseResult(EnumService enumService){
+         return getReponseMap(enumService);
      }
 
      //返回result结果
-     protected void reponseResult(HttpServletResponse response,EnumService enumService,Object obj){
-        Map<String, Object> reponseMap = getReponseMap(enumService,obj);
-        setResult(response,reponseMap);
+     protected Map<String, Object> reponseResult(EnumService enumService,Object obj){
+        return getReponseMap(enumService,obj);
     }
 
     //返回result结果
-    protected void reponseResult(HttpServletResponse response,EnumService enumService,Object obj,String key,Object value){
-        Map<String, Object> reponseMap = getReponseMap(enumService,obj,key,value);
-        setResult(response,reponseMap);
+    protected Map<String, Object> reponseResult(EnumService enumService,Object obj,String key,Object value){
+        return getReponseMap(enumService,obj,key,value);
     }
 
     /**
